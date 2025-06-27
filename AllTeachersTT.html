@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teacher Timetable Overview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    td {
+      white-space: pre-line;
+    }
+    h1 {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Teacher Timetable (All Time Slots)</h1>
+  <table id="timetable">
+    <thead>
+      <tr>
+        <th>Teacher's Name</th>
+        <th>9 to 10</th>
+        <th>10 to 11</th>
+        <th>11 to 12</th>
+        <th>12 to 1</th>
+        <th>1 to 2</th>
+        <th>2 to 3</th>
+        <th>3 to 4</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const firebaseURL = "https://timetable-db-college-default-rtdb.firebaseio.com/FlattenedTT.json";
+
+    const timeSlots = [
+      "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
+    ];
+
+    // Generate a pastel color from a string (Class)
+    function stringToColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const h = hash % 360;
+      return `hsl(${h}, 70%, 85%)`;
+    }
+
+    fetch(firebaseURL)
+      .then(response => response.json())
+      .then(data => {
+        const teacherMap = {};
+        const colorMap = {};
+
+        Object.values(data).forEach(entry => {
+          const teacher = entry.Teacher?.trim();
+          const time = entry.Time_Slot?.trim();
+          const className = entry.Class?.trim();
+
+          if (!teacher || !time || !className) return;
+
+          if (!teacherMap[teacher]) {
+            teacherMap[teacher] = {};
+            timeSlots.forEach(slot => teacherMap[teacher][slot] = []);
+          }
+
+          const info = {
+            text: `${entry.Class} - ${entry.Subject} (${entry.Section})\nRoom: ${entry.Room_No || "-"}`,
+            class: entry.Class
+          };
+
+          teacherMap[teacher][time].push(info);
+
+          // Assign consistent color for each class
+          if (!colorMap[className]) {
+            colorMap[className] = stringToColor(className);
+          }
+        });
+
+        const tbody = document.querySelector("#timetable tbody");
+
+        Object.keys(teacherMap).sort().forEach(teacher => {
+          const row = document.createElement("tr");
+
+          const nameCell = document.createElement("td");
+          nameCell.textContent = teacher;
+          row.appendChild(nameCell);
+
+          timeSlots.forEach(slot => {
+            const cell = document.createElement("td");
+
+            if (teacherMap[teacher][slot].length > 0) {
+              teacherMap[teacher][slot].forEach(entry => {
+                const div = document.createElement("div");
+                div.textContent = entry.text;
+                div.style.backgroundColor = colorMap[entry.class];
+                div.style.borderRadius = "6px";
+                div.style.padding = "4px";
+                div.style.marginBottom = "6px";
+                div.style.border = "1px solid #aaa";
+                cell.appendChild(div);
+              });
+            }
+
+            row.appendChild(cell);
+          });
+
+          tbody.appendChild(row);
+        });
+      })
+      .catch(error => {
+        console.error("Error fetching timetable:", error);
+        alert("Failed to load timetable. Please try again later.");
+      });
+  </script>
+</body>
+</html>
