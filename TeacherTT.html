@@ -130,9 +130,13 @@
       const snapshot = await db.ref("FlattenedTT").once("value");
       const data = snapshot.val();
 
-      const matched = Object.values(data || {}).filter(row =>
-        (row.Teacher || "").trim().toLowerCase() === teacherInput
-      );
+      const matched = Object.values(data || {})
+      .filter(row => (row.Teacher || "").trim().toLowerCase() === teacherInput)
+      .sort((a, b) => {
+        const order = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
+        return order.indexOf(a.Time_Slot) - order.indexOf(b.Time_Slot);
+      });
+
 
       if (matched.length === 0) {
         output.innerHTML = `<p style="color:red;">No timetable entries found for teacher: ${teacherInput}</p>`;
