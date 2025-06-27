@@ -1,175 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Student Section Lookup</title>
-<style>
-  :root {
-    --primary-color: #4a90e2;
-    --bg-color: #f7f9fc;
-    --text-color: #333;
-    --card-bg: white;
-    --input-border: #ccc;
-    --input-focus: var(--primary-color);
-  }
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0; padding: 2rem;
-    background: var(--bg-color);
-    color: var(--text-color);
-    display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
-  }
-  .container {
-    background: var(--card-bg);
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
-    width: 100%;
-    max-width: 400px;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: var(--primary-color);
-  }
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  label {
-    font-weight: 600;
-  }
-  input[type="text"] {
-    padding: 0.6rem 0.8rem;
-    font-size: 1rem;
-    border: 2px solid var(--input-border);
-    border-radius: 6px;
-    transition: border-color 0.3s ease;
-  }
-  input[type="text"]:focus {
-    outline: none;
-    border-color: var(--input-focus);
-    box-shadow: 0 0 8px rgba(74, 144, 226, 0.5);
-  }
-  button {
-    padding: 0.75rem;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: white;
-    background: var(--primary-color);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  button:hover {
-    background: #357abd;
-  }
-  .result {
-    margin-top: 1.5rem;
-    background: #eef6ff;
-    border: 1px solid var(--primary-color);
-    padding: 1rem;
-    border-radius: 8px;
-  }
-  .subject {
-    margin: 0.25rem 0;
-    font-weight: 600;
-  }
-</style>
-  <!-- Firebase SDK -->
-<!-- Firebase v9 (compat mode) for HTML script support -->
-<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js"></script>
-
-
-<script>
-  // 🔧 Replace this config with YOUR Firebase project config
-// Import the functions you need from the SDKs you need
-//import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
-  authDomain: "gcw-timetable.firebaseapp.com",
-  databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "gcw-timetable",
-  storageBucket: "gcw-timetable.firebasestorage.app",
-  messagingSenderId: "654415403426",
-  appId: "1:654415403426:web:7651a0a730ac20186a3afb"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Section Lookup</title>
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --bg-color: #f7f9fc;
+      --text-color: #333;
+      --card-bg: white;
+      --input-border: #ccc;
+      --input-focus: var(--primary-color);
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 2rem;
+      background: var(--bg-color);
+      color: var(--text-color);
+      display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
+    }
+    .container {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+      width: 100%;
+      max-width: 600px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: var(--primary-color);
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    input[type="text"] {
+      padding: 0.6rem 0.8rem;
+      font-size: 1rem;
+      border: 2px solid var(--input-border);
+      border-radius: 6px;
+    }
+    input[type="text"]:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 8px rgba(74, 144, 226, 0.5);
+    }
+    button {
+      padding: 0.75rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: white;
+      background: var(--primary-color);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 1.5rem;
+      background: #eef6ff;
+      border: 1px solid var(--primary-color);
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background: #dbeaff;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <h1><img src="logo.jpg" alt="Icon" style="height: 40px; vertical-align: middle;"> &nbsp;GCW KARNAL</h1><hr>
-  <h2 align=center>Know Your Subject-Section here</h2>
+  <div class="container">
+    <h1>GCW KARNAL</h1>
+    <h2>Know Your Subject-Section</h2>
 
-  <form id="rollForm">
-    <label for="rollno">Enter Your Complete Roll Number:</label>
-    <input type="text" id="rollno" name="rollno" required pattern="\d+" title="Please enter a valid roll number (digits only)" />
-    <button type="submit">Get Section Info</button>
-  </form>
-  <hr><br>
-  <h7><align=center><a href="http://gcwkarnal.ac.in/Data?Menu=2+Rx+N0HANc=&SubMenu=aGNA5FIGHI0="> Tap here to view Time-Table</align></a></h7>
-  <div id="result" class="result" style="display:none;"></div>
-</div>
+    <form id="rollForm">
+      <label for="rollno">Enter Your Complete Roll Number:</label>
+      <input type="text" id="rollno" name="rollno" required />
+      <button type="submit">Get Section Info</button>
+    </form>
+
+    <div id="result" class="result" style="display:none;"></div>
+  </div>
+
+  <!-- ✅ Firebase v9 compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <script>
-  async function fetchSchedule() {
-    const rollNo = document.getElementById("rollNo").value.trim();
-    const output = document.getElementById("output");
-    output.style.display = 'block';
+    const firebaseConfig = {
+      apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+      authDomain: "gcw-timetable.firebaseapp.com",
+      databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "gcw-timetable",
+      storageBucket: "gcw-timetable.appspot.com",
+      messagingSenderId: "654415403426",
+      appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+    };
 
-    if (!rollNo) {
-      alert("Please enter a roll number.");
-      return;
-    }
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    output.innerHTML = "Loading...";
+    document.getElementById("rollForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      fetchSchedule();
+    });
 
-    try {
-      const studentSnap = await db.ref(`Student/${rollNo}`).once('value');
-      if (!studentSnap.exists()) {
-        output.innerHTML = `<p style="color: red;">No student found for Roll No: ${rollNo}</p>`;
+    async function fetchSchedule() {
+      const rollNo = document.getElementById("rollno").value.trim();
+      const output = document.getElementById("result");
+      output.style.display = 'block';
+
+      if (!rollNo) {
+        alert("Please enter a roll number.");
         return;
       }
 
-      const student = studentSnap.val();
-      const subjectSectionPairs = [];
+      output.innerHTML = "Loading...";
 
-      for (let i = 1; i <= 8; i++) {
-        const sub = student[`sub${i}`];
-        const sec = student[`sec${i}`];
-        if (sub && sec) {
-          subjectSectionPairs.push(`${sub}|${sec}`);
+      try {
+        const studentSnap = await db.ref(`Student/${rollNo}`).once('value');
+        if (!studentSnap.exists()) {
+          output.innerHTML = `<p style="color: red;">No student found for Roll No: ${rollNo}</p>`;
+          return;
         }
-      }
 
-      const ttSnap = await db.ref("FlattenedTT").once('value');
-      const allTT = Object.values(ttSnap.val() || {});
+        const student = studentSnap.val();
+        const subjectSectionPairs = [];
 
-      const matched = allTT.filter(row =>
-        subjectSectionPairs.includes(`${row.subject}|${row.section}`)
-      );
+        for (let i = 1; i <= 8; i++) {
+          const sub = student[`sub${i}`];
+          const sec = student[`sec${i}`];
+          if (sub && sec) {
+            subjectSectionPairs.push(`${sub}|${sec}`);
+          }
+        }
 
-      if (matched.length === 0) {
-        output.innerHTML = `<p>No matching timetable entries found for ${student.name}.</p>`;
-        return;
-      }
+        const ttSnap = await db.ref("FlattenedTT").once('value');
+        const allTT = Object.values(ttSnap.val() || {});
 
-      let html = `<h3>Schedule for ${student.name}</h3>`;
-      html += `
-        <table>
+        const matched = allTT.filter(row =>
+          subjectSectionPairs.includes(`${row.subject}|${row.section}`)
+        );
+
+        if (matched.length === 0) {
+          output.innerHTML = `<p>No matching timetable entries found for ${student.name}.</p>`;
+          return;
+        }
+
+        let html = `<h3>Schedule for ${student.name}</h3><table>
           <tr>
             <th>Class</th>
             <th>Time Slot</th>
@@ -178,29 +167,29 @@ const app = initializeApp(firebaseConfig);
             <th>Days</th>
             <th>Teacher</th>
             <th>Room No.</th>
-          </tr>
-      `;
+          </tr>`;
 
-      matched.forEach(row => {
-        html += `
-          <tr>
-            <td>${row.class || ''}</td>
-            <td>${row.time || ''}</td>
-            <td>${row.subject || ''}</td>
-            <td>${row.section || ''}</td>
-            <td>${row.days || ''}</td>
-            <td>${row.teacher || ''}</td>
-            <td>${row.room || ''}</td>
-          </tr>
-        `;
-      });
+        matched.forEach(row => {
+          html += `
+            <tr>
+              <td>${row.class || ''}</td>
+              <td>${row.time || ''}</td>
+              <td>${row.subject || ''}</td>
+              <td>${row.section || ''}</td>
+              <td>${row.days || ''}</td>
+              <td>${row.teacher || ''}</td>
+              <td>${row.room || ''}</td>
+            </tr>`;
+        });
 
-      html += "</table>";
-      output.innerHTML = html;
+        html += "</table>";
+        output.innerHTML = html;
 
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      output.innerHTML = "<p style='color:red;'>Error fetching timetable. Please try again later.</p>";
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        output.innerHTML = "<p style='color:red;'>Error fetching timetable. Please try again later.</p>";
+      }
     }
-  }
-</script>
+  </script>
+</body>
+</html>
