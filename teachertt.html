@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <title>Teacher Timetable Lookup</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        padding: 2rem;
+        background-color: #f7f9fc;
+        color: #333;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+      }
+      h1 {
+        text-align: center;
+        color: #4a90e2;
+      }
+      input[type="text"], input[type="password"] {
+        padding: 0.6rem;
+        width: 100%;
+        max-width: 400px;
+        border: 2px solid #ccc;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+      }
+      button {
+        padding: 0.6rem 1.2rem;
+        background: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+      }
+      th, td {
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      th {
+        background-color: #e6f0ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Teacher Timetable Lookup</h1>
+      <input type="password" id="accessPassword" placeholder="Enter password" />
+      <input type="text" id="teacherName" placeholder="Enter full or partial name of Teacher" />
+      <button onclick="fetchSchedule()">Search</button>
+      <div id="output"></div>
+    </div>
+
+    <script>
+      function fetchSchedule() {
+        const teacher = document.getElementById('teacherName').value.trim();
+        const password = document.getElementById('accessPassword').value.trim();
+        const output = document.getElementById('output');
+        output.innerHTML = 'Loading...';
+
+        if (!teacher || !password) {
+          alert('Please enter both password and teacher name.');
+          return;
+        }
+
+        google.script.run.withSuccessHandler(displaySchedule).getTeacherScheduleSecure(teacher, password);
+      }
+
+      function displaySchedule(responseHtml) {
+        const output = document.getElementById('output');
+        output.innerHTML = responseHtml;
+      }
+    </script>
+  </body>
+</html>

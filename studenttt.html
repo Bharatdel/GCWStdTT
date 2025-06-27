@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Time Table</title>
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --bg-color: #f7f9fc;
+      --text-color: #333;
+      --card-bg: white;
+      --input-border: #ccc;
+      --input-focus: var(--primary-color);
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+      width: 100%;
+      max-width: 900px;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+    label {
+      font-weight: 600;
+    }
+    input[type="text"] {
+      padding: 0.6rem 0.8rem;
+      font-size: 1rem;
+      border: 2px solid var(--input-border);
+      border-radius: 6px;
+      width: 100%;
+      max-width: 300px;
+      margin-right: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--input-focus);
+      box-shadow: 0 0 8px rgba(74, 144, 226, 0.5);
+    }
+    button {
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background: var(--primary-color);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background: #357abd;
+    }
+    .result {
+      margin-top: 1.5rem;
+      background: #eef6ff;
+      border: 1px solid var(--primary-color);
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.75rem;
+      text-align: left;
+    }
+    th {
+      background-color: #dbeaff;
+      font-weight: 600;
+    }
+    h3 {
+      margin-top: 0;
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GCW KARNAL</h1>
+    <h2 align="center">View Your Detailed Time Table</h2><hr><br>
+
+    <label for="rollNo">Enter Roll No:</label>
+    <input type="text" id="rollNo" placeholder="Enter your roll number" />
+    <button onclick="fetchSchedule()">Submit</button>
+
+    <div id="output" class="result" style="display: none;"></div>
+  </div>
+
+  <script>
+    function fetchSchedule() {
+      const rollNo = document.getElementById("rollNo").value.trim();
+      const output = document.getElementById("output");
+      output.style.display = 'block';
+
+      if (!rollNo) {
+        alert("Please enter a roll number.");
+        return;
+      }
+
+      output.innerHTML = "Loading...";
+
+      google.script.run.withSuccessHandler(displaySchedule).getStudentSchedule(rollNo);
+    }
+
+    function displaySchedule(response) {
+      const output = document.getElementById("output");
+      output.innerHTML = "";
+
+      if (response.status === "error") {
+        output.innerHTML = `<p style="color: red;">${response.message}</p>`;
+        return;
+      }
+
+      let html = `<h3>Schedule for ${response.name}</h3>`;
+      html += `
+        <table>
+          <tr>
+            <th>Class</th>
+            <th>Time Slot</th>
+            <th>Subject</th>
+            <th>Section</th>
+            <th>Days</th>
+            <th>Teacher</th>
+            <th>Room No.</th>
+          </tr>
+      `;
+
+      response.schedule.forEach(row => {
+        html += `
+          <tr>
+            <td>${row.className || ''}</td>
+            <td>${row.time}</td>
+            <td>${row.subject}</td>
+            <td>${row.section}</td>
+            <td>${row.days}</td>
+            <td>${row.teacher}</td>
+            <td>${row.room}</td>
+          </tr>
+        `;
+      });
+
+      html += "</table>";
+      output.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
