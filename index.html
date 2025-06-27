@@ -150,7 +150,7 @@
         const allTT = Object.values(ttSnap.val() || {});
 
         const matched = allTT.filter(row =>
-          subjectSectionPairs.includes(`${(row.subject || '').trim().toLowerCase()}|${(row.section || '').trim().toLowerCase()}`));
+          subjectSectionPairs.includes(`${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`));
 
         if (matched.length === 0) {
           output.innerHTML = `<p>No matching timetable entries found for ${student.name}.</p>`;
@@ -171,13 +171,13 @@
         matched.forEach(row => {
           html += `
             <tr>
-              <td>${row.class || ''}</td>
-              <td>${row.time || ''}</td>
-              <td>${row.subject || ''}</td>
-              <td>${row.section || ''}</td>
-              <td>${row.days || ''}</td>
-              <td>${row.teacher || ''}</td>
-              <td>${row.room || ''}</td>
+              <td>${row.Class || ''}</td>
+              <td>${row.Time_Slot || ''}</td>
+              <td>${row.Subject || ''}</td>
+              <td>${row.Section || ''}</td>
+              <td>${row.Days || ''}</td>
+              <td>${row.Teacher || ''}</td>
+              <td>${row.Room_No || ''}</td>
             </tr>`;
         });
 
