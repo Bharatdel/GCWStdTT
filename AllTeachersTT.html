@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Teacher Timetable Overview</title>
+
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -30,6 +32,10 @@
       text-align: center;
     }
   </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
+  
 </head>
 <body>
   <h1>Teacher Timetable (All Time Slots)</h1>
@@ -50,12 +56,27 @@
   </table>
 
   <script>
-    const firebaseURL = "https://timetable-db-college-default-rtdb.firebaseio.com/FlattenedTT.json";
+    // TODO: Replace with your actual Firebase config
+      const firebaseConfig = {
+      apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+      authDomain: "gcw-timetable.firebaseapp.com",
+      databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "gcw-timetable",
+      storageBucket: "gcw-timetable.appspot.com",
+      messagingSenderId: "654415403426",
+      appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+    };
+
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     const timeSlots = [
       "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
     ];
 
+    // Generate a pastel color from a string (Class name)
     function stringToColor(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -65,9 +86,9 @@
       return `hsl(${h}, 70%, 85%)`;
     }
 
-    fetch(firebaseURL)
-      .then(response => response.json())
-      .then(data => {
+    db.ref("FlattenedTT").once("value")
+      .then(snapshot => {
+        const data = snapshot.val();
         if (!data) {
           alert("No data found in Firebase.");
           return;
@@ -133,7 +154,7 @@
         });
       })
       .catch(error => {
-        console.error("Error fetching timetable:", error);
+        console.error("Firebase fetch error:", error);
         alert("Failed to load timetable. Check console.");
       });
   </script>
