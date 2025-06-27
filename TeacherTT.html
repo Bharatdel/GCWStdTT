@@ -96,8 +96,11 @@
     <br><br>
     
     <label for="adminPass">Enter Admin Password:</label><br>
-    <input type="password" id="adminPass" placeholder="Password for access" />
     
+    <input type="password" id="adminPass" placeholder="Password for access" />
+    <br><br>
+    <label><input type="checkbox" id="showPassToggle" onchange="togglePassword()"> Show Password</label>
+
     <br><br>
     
     <button onclick="lookupTimetable()">Search</button>
@@ -107,71 +110,77 @@
   </div>
 
   <script>
+  async function lookupTimetable() {
+    const teacherInput = document.getElementById("teacherName").value.trim().toLowerCase();
     const password = document.getElementById("adminPass").value.trim();
+    const output = document.getElementById("output");
+    output.innerHTML = "";
+
+    if (!teacherInput) {
+      alert("Please enter a teacher name.");
+      return;
+    }
+
     if (password !== "Gcw@1998") {
       alert("Incorrect password. Access denied.");
       return;
     }
 
-    async function lookupTimetable() {
-      const teacherInput = document.getElementById("teacherName").value.trim().toLowerCase();
-      const output = document.getElementById("output");
-      output.innerHTML = "";
+    try {
+      const snapshot = await db.ref("FlattenedTT").once("value");
+      const data = snapshot.val();
 
-      if (!teacherInput) {
-        alert("Please enter a teacher name.");
+      const matched = Object.values(data || {}).filter(row =>
+        (row.Teacher || "").trim().toLowerCase() === teacherInput
+      );
+
+      if (matched.length === 0) {
+        output.innerHTML = `<p style="color:red;">No timetable entries found for teacher: ${teacherInput}</p>`;
         return;
       }
 
-      try {
-        const snapshot = await db.ref("FlattenedTT").once("value");
-        const data = snapshot.val();
+      let html = `
+        <div class="table-wrapper">
+        <table>
+          <tr>
+            <th>Class</th>
+            <th>Time Slot</th>
+            <th>Subject</th>
+            <th>Section</th>
+            <th>Days</th>
+            <th>Teacher</th>
+            <th>Room No.</th>
+          </tr>
+      `;
 
-        const matched = Object.values(data || {}).filter(row =>
-          (row.Teacher || "").trim().toLowerCase() === teacherInput
-        );
-
-        if (matched.length === 0) {
-          output.innerHTML = `<p style="color:red;">No timetable entries found for teacher: ${teacherInput}</p>`;
-          return;
-        }
-
-        let html = `
-          <div class="table-wrapper">
-          <table>
-            <tr>
-              <th>Class</th>
-              <th>Time Slot</th>
-              <th>Subject</th>
-              <th>Section</th>
-              <th>Days</th>
-              <th>Teacher</th>
-              <th>Room No.</th>
-            </tr>
+      matched.forEach(row => {
+        html += `
+          <tr>
+            <td>${row.Class || ''}</td>
+            <td>${row.Time_Slot || ''}</td>
+            <td>${row.Subject || ''}</td>
+            <td>${row.Section || ''}</td>
+            <td>${row.Days || ''}</td>
+            <td>${row.Teacher || ''}</td>
+            <td>${row.Room_No || ''}</td>
+          </tr>
         `;
+      });
 
-        matched.forEach(row => {
-          html += `
-            <tr>
-              <td>${row.Class || ''}</td>
-              <td>${row.Time_Slot || ''}</td>
-              <td>${row.Subject || ''}</td>
-              <td>${row.Section || ''}</td>
-              <td>${row.Days || ''}</td>
-              <td>${row.Teacher || ''}</td>
-              <td>${row.Room_No || ''}</td>
-            </tr>
-          `;
-        });
+      html += "</table></div>";
+      output.innerHTML = html;
 
-        html += "</table></div>";
-        output.innerHTML = html;
-
-      } catch (err) {
-        console.error("Error fetching timetable:", err);
-        output.innerHTML = `<p style="color:red;">Failed to fetch data. Try again later.</p>`;
-      }
+    } catch (err) {
+      console.error("Error fetching timetable:", err);
+      output.innerHTML = `<p style="color:red;">Failed to fetch data. Try again later.</p>`;
     }
-  </script>
+  }
+</script>
+  <script>
+  function togglePassword() {
+    const passField = document.getElementById("adminPass");
+    passField.type = passField.type === "password" ? "text" : "password";
+  }
+</script>
 </body>
 </html>
