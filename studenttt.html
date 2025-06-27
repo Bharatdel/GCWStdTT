@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <base target="_top">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Student Time Table</title>
@@ -14,6 +13,7 @@
       --input-border: #ccc;
       --input-focus: var(--primary-color);
     }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
@@ -25,6 +25,7 @@
       align-items: flex-start;
       min-height: 100vh;
     }
+
     .container {
       background: var(--card-bg);
       padding: 2rem;
@@ -33,14 +34,17 @@
       width: 100%;
       max-width: 900px;
     }
+
     h1 {
       text-align: center;
       color: var(--primary-color);
       margin-bottom: 1rem;
     }
+
     label {
       font-weight: 600;
     }
+
     input[type="text"] {
       padding: 0.6rem 0.8rem;
       font-size: 1rem;
@@ -51,11 +55,13 @@
       margin-right: 1rem;
       transition: border-color 0.3s ease;
     }
+
     input[type="text"]:focus {
       outline: none;
       border-color: var(--input-focus);
       box-shadow: 0 0 8px rgba(74, 144, 226, 0.5);
     }
+
     button {
       padding: 0.6rem 1rem;
       font-size: 1rem;
@@ -67,9 +73,11 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
+
     button:hover {
       background: #357abd;
     }
+
     .result {
       margin-top: 1.5rem;
       background: #eef6ff;
@@ -77,20 +85,24 @@
       padding: 1rem;
       border-radius: 8px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 0.75rem;
       text-align: left;
     }
+
     th {
       background-color: #dbeaff;
       font-weight: 600;
     }
+
     h3 {
       margin-top: 0;
       color: var(--primary-color);
@@ -110,6 +122,8 @@
   </div>
 
   <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwsfhzQkObdc6JihNrmx5R0Riy6kmJ919djbyhvA6FhwqIG5zZZ2kPWkaxrf_kE5hyP/exec';
+
     function fetchSchedule() {
       const rollNo = document.getElementById("rollNo").value.trim();
       const output = document.getElementById("output");
@@ -122,48 +136,49 @@
 
       output.innerHTML = "Loading...";
 
-      google.script.run.withSuccessHandler(displaySchedule).getStudentSchedule(rollNo);
-    }
+      fetch(`${API_URL}?rollno=${encodeURIComponent(rollNo)}`)
+        .then((res) => res.json())
+        .then((response) => {
+          if (response.status === "error") {
+            output.innerHTML = `<p style="color: red;">${response.message}</p>`;
+            return;
+          }
 
-    function displaySchedule(response) {
-      const output = document.getElementById("output");
-      output.innerHTML = "";
+          let html = `<h3>Schedule for ${response.name}</h3>`;
+          html += `
+            <table>
+              <tr>
+                <th>Class</th>
+                <th>Time Slot</th>
+                <th>Subject</th>
+                <th>Section</th>
+                <th>Days</th>
+                <th>Teacher</th>
+                <th>Room No.</th>
+              </tr>
+          `;
 
-      if (response.status === "error") {
-        output.innerHTML = `<p style="color: red;">${response.message}</p>`;
-        return;
-      }
+          response.schedule.forEach(row => {
+            html += `
+              <tr>
+                <td>${row.className || ''}</td>
+                <td>${row.time}</td>
+                <td>${row.subject}</td>
+                <td>${row.section}</td>
+                <td>${row.days}</td>
+                <td>${row.teacher}</td>
+                <td>${row.room}</td>
+              </tr>
+            `;
+          });
 
-      let html = `<h3>Schedule for ${response.name}</h3>`;
-      html += `
-        <table>
-          <tr>
-            <th>Class</th>
-            <th>Time Slot</th>
-            <th>Subject</th>
-            <th>Section</th>
-            <th>Days</th>
-            <th>Teacher</th>
-            <th>Room No.</th>
-          </tr>
-      `;
-
-      response.schedule.forEach(row => {
-        html += `
-          <tr>
-            <td>${row.className || ''}</td>
-            <td>${row.time}</td>
-            <td>${row.subject}</td>
-            <td>${row.section}</td>
-            <td>${row.days}</td>
-            <td>${row.teacher}</td>
-            <td>${row.room}</td>
-          </tr>
-        `;
-      });
-
-      html += "</table>";
-      output.innerHTML = html;
+          html += "</table>";
+          output.innerHTML = html;
+        })
+        .catch((err) => {
+          console.error(err);
+          output.innerHTML = "<p style='color:red;'>Error fetching timetable. Please try again later.</p>";
+        });
     }
   </script>
 </body>
