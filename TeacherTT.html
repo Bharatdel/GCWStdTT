@@ -90,14 +90,29 @@
     <h1>GCW Karnal - Teacher Timetable Lookup</h1>
     <p><strong>Note:</strong> This page is for administrative use only.</p>
 
-    <label for="teacherName">Enter Teacher's Name:</label><br><br>
+    <label for="teacherName">Enter Teacher's Name:</label><br>
     <input type="text" id="teacherName" placeholder="e.g., Meena, Rajpal" />
+    
+    <br><br>
+    
+    <label for="adminPass">Enter Admin Password:</label><br>
+    <input type="password" id="adminPass" placeholder="Password for access" />
+    
+    <br><br>
+    
     <button onclick="lookupTimetable()">Search</button>
+
 
     <div id="output" class="result"></div>
   </div>
 
   <script>
+    const password = document.getElementById("adminPass").value.trim();
+    if (password !== "Gcw@1998") {
+      alert("Incorrect password. Access denied.");
+      return;
+    }
+
     async function lookupTimetable() {
       const teacherInput = document.getElementById("teacherName").value.trim().toLowerCase();
       const output = document.getElementById("output");
