@@ -154,12 +154,16 @@
             subjectSectionPairs.push(`${sub.trim().toLowerCase()}|${sec.trim().toLowerCase()}`);
           }
         }
-
+        const studentClass = student.sem;
         const ttSnap = await db.ref("FlattenedTT").once('value');
         const allTT = Object.values(ttSnap.val() || {});
 
-        const matched = allTT.filter(row =>
-          subjectSectionPairs.includes(`${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`));
+       const matched = allTT.filter(row =>
+          (row.Class || '').trim().toLowerCase() === studentClass.trim().toLowerCase() &&
+          subjectSectionPairs.includes(
+            `${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`
+          )
+        );
 
         if (matched.length === 0) {
           output.innerHTML = `<p>No matching timetable entries found for ${student.name}.</p>`;
