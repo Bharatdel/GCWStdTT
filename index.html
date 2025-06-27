@@ -150,7 +150,7 @@
         const allTT = Object.values(ttSnap.val() || {});
 
         const matched = allTT.filter(row =>
-          subjectSectionPairs.includes(`${(row.subject || '').trim().toLowerCase()}|${(row.section || '').trim().toLowerCase()}`;
+          subjectSectionPairs.includes(`${(row.subject || '').trim().toLowerCase()}|${(row.section || '').trim().toLowerCase()}`));
 
         if (matched.length === 0) {
           output.innerHTML = `<p>No matching timetable entries found for ${student.name}.</p>`;
