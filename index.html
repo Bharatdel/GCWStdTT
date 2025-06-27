@@ -142,7 +142,7 @@
           const sub = student[`sub${i}`];
           const sec = student[`sec${i}`];
           if (sub && sec) {
-            subjectSectionPairs.push(`${sub}|${sec}`);
+            subjectSectionPairs.push(`${sub.trim().toLowerCase()}|${sec.trim().toLowerCase()}`);
           }
         }
 
@@ -150,7 +150,7 @@
         const allTT = Object.values(ttSnap.val() || {});
 
         const matched = allTT.filter(row =>
-          subjectSectionPairs.includes(`${row.subject}|${row.section}`)
+          subjectSectionPairs.includes(`${(row.subject || '').trim().toLowerCase()}|${(row.section || '').trim().toLowerCase()}`);
         );
 
         if (matched.length === 0) {
