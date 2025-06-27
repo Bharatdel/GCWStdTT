@@ -56,26 +56,31 @@
       "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
     ];
 
-    // Generate a pastel color from a string (Class)
     function stringToColor(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
       }
-      const h = hash % 360;
+      const h = Math.abs(hash) % 360;
       return `hsl(${h}, 70%, 85%)`;
     }
 
     fetch(firebaseURL)
       .then(response => response.json())
       .then(data => {
+        if (!data) {
+          alert("No data found in Firebase.");
+          return;
+        }
+
         const teacherMap = {};
         const colorMap = {};
 
-        Object.values(data).forEach(entry => {
-          const teacher = entry.Teacher?.trim();
-          const time = entry.Time_Slot?.trim();
-          const className = entry.Class?.trim();
+        Object.keys(data).forEach(key => {
+          const entry = data[key];
+          const teacher = entry["Teacher"]?.trim();
+          const time = entry["Time_Slot"]?.trim();
+          const className = entry["Class"]?.trim();
 
           if (!teacher || !time || !className) return;
 
@@ -85,13 +90,12 @@
           }
 
           const info = {
-            text: `${entry.Class} - ${entry.Subject} (${entry.Section})\nRoom: ${entry.Room_No || "-"}`,
-            class: entry.Class
+            text: `${entry["Class"]} - ${entry["Subject"]} (${entry["Section"]})\nRoom: ${entry["Room_No"] || "-"}`,
+            class: entry["Class"]
           };
 
           teacherMap[teacher][time].push(info);
 
-          // Assign consistent color for each class
           if (!colorMap[className]) {
             colorMap[className] = stringToColor(className);
           }
@@ -130,7 +134,7 @@
       })
       .catch(error => {
         console.error("Error fetching timetable:", error);
-        alert("Failed to load timetable. Please try again later.");
+        alert("Failed to load timetable. Check console.");
       });
   </script>
 </body>
