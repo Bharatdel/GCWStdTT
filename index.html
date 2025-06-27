@@ -87,15 +87,24 @@
 
 <script>
   // 🔧 Replace this config with YOUR Firebase project config
-  const firebaseConfig = {
-    apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
-    authDomain: "gcw-timetable.firebaseapp.com",
-    databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gcw-timetable",
-    storageBucket: "gcw-timetable.firebasestorage.app",
-    messagingSenderId: "654415403426",
-    appId: "1:654415403426:web:7651a0a730ac20186a3afb"
-  };
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+  authDomain: "gcw-timetable.firebaseapp.com",
+  databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gcw-timetable",
+  storageBucket: "gcw-timetable.firebasestorage.app",
+  messagingSenderId: "654415403426",
+  appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
