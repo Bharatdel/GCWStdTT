@@ -13,6 +13,15 @@
       --input-border: #ccc;
       --input-focus: var(--primary-color);
     }
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+    
+    table {
+      min-width: 700px;
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0; padding: 2rem;
@@ -182,7 +191,8 @@
         });
 
         html += "</table>";
-        output.innerHTML = html;
+        
+        output.innerHTML = `<div class="table-wrapper">${html}</div>`;
 
       } catch (err) {
         console.error("Error fetching data:", err);
