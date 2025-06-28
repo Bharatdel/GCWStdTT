@@ -138,36 +138,36 @@
           row.appendChild(roomCell);
 
           timeSlots.forEach(slot => {
-            const cell = document.createElement("td");
-            const entries = roomMap[room][slot];
+  const cell = document.createElement("td");
+  const entries = roomMap[room][slot];
 
-            // ✅ Count unique days in this time slot
-            const uniqueDays = new Set();
-            entries.forEach(entry => {
-              entry.daysList.forEach(day => uniqueDays.add(day));
-            });
-            const totalDays = uniqueDays.size;
+  // ✅ Count total day mentions (including duplicates)
+  let totalDays = 0;
+  entries.forEach(entry => {
+    totalDays += entry.daysList.length;
+  });
 
-            if (totalDays > 6) {
-              cell.classList.add("overbooked");
-            } else if (totalDays < 6 && totalDays > 0) {
-              cell.classList.add("underbooked");
-            }
+  if (totalDays > 6) {
+    cell.classList.add("overbooked");
+  } else if (totalDays < 6 && totalDays > 0) {
+    cell.classList.add("underbooked");
+  }
 
-            // Add each class block
-            entries.forEach(entry => {
-              const div = document.createElement("div");
-              div.textContent = entry.text;
-              div.style.backgroundColor = colorMap[entry.class];
-              div.style.borderRadius = "6px";
-              div.style.padding = "4px";
-              div.style.marginBottom = "6px";
-              div.style.border = "1px solid #aaa";
-              cell.appendChild(div);
-            });
+  // Add each class block
+  entries.forEach(entry => {
+    const div = document.createElement("div");
+    div.textContent = entry.text;
+    div.style.backgroundColor = colorMap[entry.class];
+    div.style.borderRadius = "6px";
+    div.style.padding = "4px";
+    div.style.marginBottom = "6px";
+    div.style.border = "1px solid #aaa";
+    cell.appendChild(div);
+  });
 
-            row.appendChild(cell);
-          });
+  row.appendChild(cell);
+});
+
 
           tbody.appendChild(row);
         });
