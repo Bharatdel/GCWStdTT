@@ -30,12 +30,11 @@
       text-align: center;
     }
 
-    /* Highlight cell */
     td.overbooked {
-      background-color: #f8caca !important;
+      background-color: #f8caca !important; /* Red */
     }
     td.underbooked {
-      background-color: #d6f5d6 !important;
+      background-color: #d6f5d6 !important; /* Green */
     }
   </style>
 
@@ -105,7 +104,7 @@
           const room = entry["Room_No"]?.trim();
           const time = entry["Time_Slot"]?.trim();
           const className = entry["Class"]?.trim();
-          const teacher = entry["Teacher"]?.trim();
+          const teacher = entry["Teacher"]?.trim() || "⚠ Missing Teacher";
           const section = entry["Section"]?.trim();
           const days = entry["Days"]?.trim();
 
@@ -142,17 +141,16 @@
             const cell = document.createElement("td");
             const entries = roomMap[room][slot];
 
-            // Collect unique days used
-            const allDays = new Set();
+            // ✅ Count unique days in this time slot
+            const uniqueDays = new Set();
             entries.forEach(entry => {
-              entry.daysList.forEach(day => allDays.add(day));
+              entry.daysList.forEach(day => uniqueDays.add(day));
             });
+            const totalDays = uniqueDays.size;
 
-            // Apply class to entire cell
-            const totalDays = allDays.size;
             if (totalDays > 6) {
               cell.classList.add("overbooked");
-            } else if (totalDays < 6 && entries.length > 0) {
+            } else if (totalDays < 6 && totalDays > 0) {
               cell.classList.add("underbooked");
             }
 
