@@ -29,10 +29,12 @@
     h1 {
       text-align: center;
     }
-    .overbooked {
+
+    /* Highlight cell */
+    td.overbooked {
       background-color: #f8caca !important;
     }
-    .underbooked {
+    td.underbooked {
       background-color: #d6f5d6 !important;
     }
   </style>
@@ -78,7 +80,6 @@
       "1 to 2", "2 to 3", "3 to 4"
     ];
 
-    // Generate pastel color for each class
     function stringToColor(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -147,14 +148,15 @@
               entry.daysList.forEach(day => allDays.add(day));
             });
 
-            // Highlighting based on usage
+            // Apply class to entire cell
             const totalDays = allDays.size;
             if (totalDays > 6) {
               cell.classList.add("overbooked");
-            } else if (totalDays < 6) {
+            } else if (totalDays < 6 && entries.length > 0) {
               cell.classList.add("underbooked");
             }
 
+            // Add each class block
             entries.forEach(entry => {
               const div = document.createElement("div");
               div.textContent = entry.text;
