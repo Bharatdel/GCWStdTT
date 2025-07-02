@@ -7,45 +7,82 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
+      background: #f9f9fb;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
     }
+
+    .container {
+      max-width: 960px;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4a90e2;
+      margin-bottom: 20px;
+    }
+
+    #form-area {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    select, input[type="password"], button {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #4a90e2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #357abd;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
+      margin-top: 20px;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: left;
-      vertical-align: top;
     }
+
     th {
-      background-color: #f4f4f4;
+      background-color: #eaf3ff;
     }
-    td {
-      white-space: pre-line;
-    }
-    h1 {
-      text-align: center;
-    }
+
     td.overbooked {
-      background-color: #f8caca !important; /* Red */
+      background-color: #f8caca !important;
     }
+
     td.underbooked {
-      background-color: #d6f5d6 !important; /* Green */
+      background-color: #d6f5d6 !important;
     }
-    #form-area {
-      margin-bottom: 20px;
-    }
-    select, input[type="password"] {
-      padding: 8px;
-      font-size: 14px;
-      margin-right: 10px;
-    }
-    button {
-      padding: 8px 12px;
-      font-size: 14px;
+
+    .info {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+      font-weight: bold;
     }
   </style>
 
@@ -54,31 +91,31 @@
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
 </head>
 <body>
-  <h1>Room-wise Timetable Lookup</h1>
+  <div class="container">
+    <h1>Room-wise Timetable Lookup</h1>
 
-  <div id="form-area">
-    <select id="roomSelect">
-      <option value="">Loading rooms...</option>
-    </select>
-    <input type="password" id="passwordInput" placeholder="Enter Password" />
-    <button onclick="loadTimetable()">Show Timetable</button>
+    <div id="form-area">
+      <select id="roomSelect">
+        <option value="">Loading rooms...</option>
+      </select>
+      <input type="password" id="passwordInput" placeholder="Enter Password" />
+      <button onclick="loadTimetable()">Show Timetable</button>
+    </div>
+
+    <div id="roomInfo" class="info"></div>
+
+    <table id="timetable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Time Slot</th>
+          <th>Class – Section</th>
+          <th>Teacher</th>
+          <th>Days</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
-
-  <table id="timetable" style="display:none;">
-    <thead>
-      <tr>
-        <th>Room No</th>
-        <th>9 to 10</th>
-        <th>10 to 11</th>
-        <th>11 to 12</th>
-        <th>12 to 1</th>
-        <th>1 to 2</th>
-        <th>2 to 3</th>
-        <th>3 to 4</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
   <script>
     const firebaseConfig = {
@@ -108,7 +145,6 @@
       return `hsl(${h}, 70%, 85%)`;
     }
 
-    // Populate dropdown with unique room numbers
     function populateRoomDropdown(data) {
       const roomSet = new Set();
       Object.values(data).forEach(entry => {
@@ -130,7 +166,14 @@
     function loadTimetable() {
       const room = document.getElementById("roomSelect").value;
       const password = document.getElementById("passwordInput").value.trim();
-      const correctPassword = "admin123"; // Change as needed
+      const correctPassword = "admin123";
+
+      const roomInfo = document.getElementById("roomInfo");
+      roomInfo.textContent = "";
+      const table = document.getElementById("timetable");
+      const tbody = table.querySelector("tbody");
+      tbody.innerHTML = "";
+      table.style.display = "none";
 
       if (!room || !password) {
         alert("Please select Room and enter Password.");
@@ -150,84 +193,66 @@
             return;
           }
 
-          const roomMap = {};
           const colorMap = {};
+          const entriesByTime = {};
 
-          Object.keys(data).forEach(key => {
-            const entry = data[key];
+          Object.values(data).forEach(entry => {
             const entryRoom = entry["Room_No"]?.trim();
+            if (entryRoom !== room) return;
+
             const time = entry["Time_Slot"]?.trim();
             const className = entry["Class"]?.trim();
             const teacher = entry["Teacher"]?.trim() || "⚠ Missing Teacher";
             const section = entry["Section"]?.trim();
             const days = entry["Days"]?.trim();
 
-            if (!entryRoom || !time || !className || !days) return;
-            if (entryRoom !== room) return;
+            if (!time || !className || !days) return;
 
-            if (!roomMap[room]) {
-              roomMap[room] = {};
-              timeSlots.forEach(slot => roomMap[room][slot] = []);
-            }
+            if (!entriesByTime[time]) entriesByTime[time] = [];
 
-            const info = {
-              text: `${className} - ${section}\n${teacher} (${days})`,
+            entriesByTime[time].push({
               class: className,
-              daysList: days.split(",").map(d => d.trim())
-            };
-
-            roomMap[room][time].push(info);
-
-            if (!colorMap[className]) {
-              colorMap[className] = stringToColor(className);
-            }
+              section: section,
+              teacher: teacher,
+              days: days,
+              color: colorMap[className] || (colorMap[className] = stringToColor(className))
+            });
           });
 
-          const tbody = document.querySelector("#timetable tbody");
-          tbody.innerHTML = ""; // Clear old
-          const table = document.getElementById("timetable");
-          table.style.display = "none";
-
-          if (!roomMap[room]) {
+          const sortedSlots = timeSlots.filter(t => entriesByTime[t]);
+          if (sortedSlots.length === 0) {
             alert("No timetable found for selected room.");
             return;
           }
 
-          const row = document.createElement("tr");
-          const roomCell = document.createElement("td");
-          roomCell.textContent = room;
-          row.appendChild(roomCell);
+          roomInfo.textContent = `Room: ${room}`;
 
-          timeSlots.forEach(slot => {
-            const cell = document.createElement("td");
-            const entries = roomMap[room][slot];
+          sortedSlots.forEach(slot => {
+            const records = entriesByTime[slot];
+            records.forEach(rec => {
+              const tr = document.createElement("tr");
 
-            let totalDays = 0;
-            entries.forEach(entry => {
-              totalDays += entry.daysList.length;
+              const tdTime = document.createElement("td");
+              tdTime.textContent = slot;
+              tr.appendChild(tdTime);
+
+              const tdClass = document.createElement("td");
+              tdClass.textContent = `${rec.class} – ${rec.section}`;
+              tdClass.style.backgroundColor = rec.color;
+              tr.appendChild(tdClass);
+
+              const tdTeacher = document.createElement("td");
+              tdTeacher.textContent = rec.teacher;
+              tr.appendChild(tdTeacher);
+
+              const tdDays = document.createElement("td");
+              tdDays.textContent = rec.days;
+              tr.appendChild(tdDays);
+
+              tbody.appendChild(tr);
             });
-
-            if (totalDays > 6) {
-              cell.classList.add("overbooked");
-            } else if (totalDays < 6 && totalDays > 0) {
-              cell.classList.add("underbooked");
-            }
-
-            entries.forEach(entry => {
-              const div = document.createElement("div");
-              div.textContent = entry.text;
-              div.style.backgroundColor = colorMap[entry.class];
-              div.style.borderRadius = "6px";
-              div.style.padding = "4px";
-              div.style.marginBottom = "6px";
-              div.style.border = "1px solid #aaa";
-              cell.appendChild(div);
-            });
-
-            row.appendChild(cell);
           });
 
-          tbody.appendChild(row);
           table.style.display = "table";
         })
         .catch(error => {
@@ -236,7 +261,6 @@
         });
     }
 
-    // Fetch data once to populate dropdown on page load
     window.onload = function () {
       db.ref("FlattenedTT").once("value").then(snapshot => {
         const data = snapshot.val();
