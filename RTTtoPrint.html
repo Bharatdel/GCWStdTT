@@ -32,29 +32,29 @@
     }
 
     h1 {
-      font-size: 36px;
+      font-size: 48px;
       font-weight: bold;
     }
 
     h2 {
-      font-size: 28px;
+      font-size: 36px;
     }
 
     h3 {
-      font-size: 24px;
-      margin-bottom: 20px;
+      font-size: 32px;
+      margin-bottom: 30px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 40px;
-      font-size: 22px;
+      margin-bottom: 50px;
+      font-size: 28px;
     }
 
     th, td {
       border: 2px solid #000;
-      padding: 16px;
+      padding: 18px;
       text-align: left;
       vertical-align: middle;
       font-weight: bold;
@@ -68,7 +68,7 @@
       margin-top: 80px;
       display: flex;
       justify-content: space-between;
-      font-size: 20px;
+      font-size: 24px;
       padding: 0 20px;
     }
 
@@ -85,16 +85,20 @@
     }
 
     .controls select, .controls button {
-      padding: 12px 20px;
-      font-size: 18px;
+      padding: 14px 20px;
+      font-size: 22px;
       margin: 10px;
     }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
 </head>
 <body>
   <div class="controls">
     <select id="roomSelect">
-      <option value="">Select Room</option>
+      <option value="">Loading room list...</option>
     </select>
     <button onclick="generateTable()">Generate Timetable</button>
     <button onclick="window.print()">Print / Save as PDF</button>
@@ -124,28 +128,36 @@
   </div>
 
   <script>
-    const timetableData = {
-      "R-14": {
-        "9 to 10": [
-          { class: "BA 5th", section: "A", teacher: "Mr. Sharma", days: "Mon, Tue" },
-          { class: "BSc 3rd", section: "B", teacher: "Ms. Verma", days: "Wed, Fri" }
-        ],
-        "10 to 11": [
-          { class: "BCom 2nd", section: "C", teacher: "Dr. Singh", days: "Mon, Wed, Thu" }
-        ]
-      },
-      "N-1": {
-        "9 to 10": [
-          { class: "BA 1st", section: "A", teacher: "Ms. Ritu", days: "Mon, Tue" }
-        ]
-      }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+      authDomain: "gcw-timetable.firebaseapp.com",
+      databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "gcw-timetable",
+      storageBucket: "gcw-timetable.appspot.com",
+      messagingSenderId: "654415403426",
+      appId: "1:654415403426:web:7651a0a730ac20186a3afb"
     };
 
-    const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const timeSlots = [
+      "9 to 10", "10 to 11", "11 to 12", "12 to 1",
+      "1 to 2", "2 to 3", "3 to 4"
+    ];
 
-    function populateDropdown() {
+    let fullData = {};
+
+    function populateRoomDropdown() {
+      const roomSet = new Set();
+      Object.values(fullData).forEach(entry => {
+        if (entry["Room_No"]) {
+          roomSet.add(entry["Room_No"].trim());
+        }
+      });
+
       const roomSelect = document.getElementById("roomSelect");
-      Object.keys(timetableData).forEach(room => {
+      roomSelect.innerHTML = '<option value="">Select Room</option>';
+      [...roomSet].sort().forEach(room => {
         const option = document.createElement("option");
         option.value = room;
         option.textContent = room;
@@ -160,18 +172,41 @@
       tbody.innerHTML = "";
       roomHeading.textContent = `Room No: ${room}`;
 
-      if (!room || !timetableData[room]) return;
+      const roomMap = {};
+      timeSlots.forEach(slot => roomMap[slot] = []);
+
+      Object.values(fullData).forEach(entry => {
+        const entryRoom = entry["Room_No"]?.trim();
+        const slot = entry["Time_Slot"]?.trim();
+        if (entryRoom !== room || !slot) return;
+
+        const className = entry["Class"]?.trim() || "";
+        const section = entry["Section"]?.trim() || "";
+        const teacher = entry["Teacher"]?.trim() || "⚠ Missing";
+        const days = entry["Days"]?.trim() || "";
+
+        roomMap[slot].push({
+          class: className,
+          section: section,
+          teacher: teacher,
+          days: days
+        });
+      });
 
       timeSlots.forEach(slot => {
-        const entries = timetableData[room][slot] || [];
+        const entries = roomMap[slot];
+        if (entries.length === 0) return;
+
         entries.forEach((entry, index) => {
           const tr = document.createElement("tr");
+
           if (index === 0) {
             const tdTime = document.createElement("td");
             tdTime.rowSpan = entries.length;
             tdTime.textContent = slot;
             tr.appendChild(tdTime);
           }
+
           const tdClass = document.createElement("td");
           tdClass.textContent = `${entry.class} – ${entry.section}`;
           const tdTeacher = document.createElement("td");
@@ -187,7 +222,13 @@
       });
     }
 
-    window.onload = populateDropdown;
+    // Load data from Firebase and populate dropdown on page load
+    window.onload = function () {
+      db.ref("FlattenedTT").once("value").then(snapshot => {
+        fullData = snapshot.val() || {};
+        populateRoomDropdown();
+      });
+    };
   </script>
 </body>
 </html>
