@@ -8,6 +8,9 @@
       body {
         margin: 0;
       }
+      .controls {
+        display: none;
+      }
     }
 
     body {
@@ -29,16 +32,16 @@
     }
 
     h1 {
-      font-size: 28px;
+      font-size: 36px;
       font-weight: bold;
     }
 
     h2 {
-      font-size: 22px;
+      font-size: 28px;
     }
 
     h3 {
-      font-size: 20px;
+      font-size: 24px;
       margin-bottom: 20px;
     }
 
@@ -46,12 +49,12 @@
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 40px;
-      font-size: 16px;
+      font-size: 22px;
     }
 
     th, td {
       border: 2px solid #000;
-      padding: 10px;
+      padding: 16px;
       text-align: left;
       vertical-align: middle;
       font-weight: bold;
@@ -62,10 +65,10 @@
     }
 
     .signature-row {
-      margin-top: 60px;
+      margin-top: 80px;
       display: flex;
       justify-content: space-between;
-      font-size: 16px;
+      font-size: 20px;
       padding: 0 20px;
     }
 
@@ -73,15 +76,34 @@
       width: 40%;
       border-top: 2px solid #000;
       text-align: center;
-      padding-top: 6px;
+      padding-top: 10px;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .controls select, .controls button {
+      padding: 12px 20px;
+      font-size: 18px;
+      margin: 10px;
     }
   </style>
 </head>
 <body>
+  <div class="controls">
+    <select id="roomSelect">
+      <option value="">Select Room</option>
+    </select>
+    <button onclick="generateTable()">Generate Timetable</button>
+    <button onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
   <div class="print-container">
     <h1>GCW KARNAL</h1>
     <h2>Time Table for the Session 2025–26</h2>
-    <h3>Room No: R-14</h3> <!-- You can dynamically insert room number here -->
+    <h3 id="roomHeading">Room No:</h3>
 
     <table>
       <thead>
@@ -92,30 +114,7 @@
           <th style="width: 25%;">Days</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Sample Row Group -->
-        <tr>
-          <td rowspan="2">9 to 10</td>
-          <td>BA 5th – A</td>
-          <td>Mr. Sharma</td>
-          <td>Mon, Tue</td>
-        </tr>
-        <tr>
-          <td>BSc 3rd – B</td>
-          <td>Ms. Verma</td>
-          <td>Wed, Fri</td>
-        </tr>
-
-        <!-- Another Time Slot with Single Entry -->
-        <tr>
-          <td>10 to 11</td>
-          <td>BCom 2nd – C</td>
-          <td>Dr. Singh</td>
-          <td>Mon, Wed, Thu</td>
-        </tr>
-
-        <!-- Add more time slot groups here -->
-      </tbody>
+      <tbody id="timetable-body"></tbody>
     </table>
 
     <div class="signature-row">
@@ -123,5 +122,72 @@
       <div class="signature">Principal</div>
     </div>
   </div>
+
+  <script>
+    const timetableData = {
+      "R-14": {
+        "9 to 10": [
+          { class: "BA 5th", section: "A", teacher: "Mr. Sharma", days: "Mon, Tue" },
+          { class: "BSc 3rd", section: "B", teacher: "Ms. Verma", days: "Wed, Fri" }
+        ],
+        "10 to 11": [
+          { class: "BCom 2nd", section: "C", teacher: "Dr. Singh", days: "Mon, Wed, Thu" }
+        ]
+      },
+      "N-1": {
+        "9 to 10": [
+          { class: "BA 1st", section: "A", teacher: "Ms. Ritu", days: "Mon, Tue" }
+        ]
+      }
+    };
+
+    const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
+
+    function populateDropdown() {
+      const roomSelect = document.getElementById("roomSelect");
+      Object.keys(timetableData).forEach(room => {
+        const option = document.createElement("option");
+        option.value = room;
+        option.textContent = room;
+        roomSelect.appendChild(option);
+      });
+    }
+
+    function generateTable() {
+      const room = document.getElementById("roomSelect").value;
+      const tbody = document.getElementById("timetable-body");
+      const roomHeading = document.getElementById("roomHeading");
+      tbody.innerHTML = "";
+      roomHeading.textContent = `Room No: ${room}`;
+
+      if (!room || !timetableData[room]) return;
+
+      timeSlots.forEach(slot => {
+        const entries = timetableData[room][slot] || [];
+        entries.forEach((entry, index) => {
+          const tr = document.createElement("tr");
+          if (index === 0) {
+            const tdTime = document.createElement("td");
+            tdTime.rowSpan = entries.length;
+            tdTime.textContent = slot;
+            tr.appendChild(tdTime);
+          }
+          const tdClass = document.createElement("td");
+          tdClass.textContent = `${entry.class} – ${entry.section}`;
+          const tdTeacher = document.createElement("td");
+          tdTeacher.textContent = entry.teacher;
+          const tdDays = document.createElement("td");
+          tdDays.textContent = entry.days;
+
+          tr.appendChild(tdClass);
+          tr.appendChild(tdTeacher);
+          tr.appendChild(tdDays);
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    window.onload = populateDropdown;
+  </script>
 </body>
 </html>
