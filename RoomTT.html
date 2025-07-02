@@ -202,7 +202,10 @@
 
             const time = entry["Time_Slot"]?.trim();
             const className = entry["Class"]?.trim();
-            const teacher = entry["Teacher"]?.trim() || "⚠ Missing Teacher";
+            const teacherName = entry["Teacher"]?.trim();
+            const teacher = teacherName ? `Dr. ${teacherName}` : "⚠ Missing Teacher";
+
+            //const teacher = entry["Teacher"]?.trim() || "⚠ Missing Teacher";
             const section = entry["Section"]?.trim();
             const days = entry["Days"]?.trim();
 
