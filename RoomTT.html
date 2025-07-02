@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Room-wise Timetable Lookup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    td {
+      white-space: pre-line;
+    }
+    h1 {
+      text-align: center;
+    }
+    td.overbooked {
+      background-color: #f8caca !important; /* Red */
+    }
+    td.underbooked {
+      background-color: #d6f5d6 !important; /* Green */
+    }
+    #form-area {
+      margin-bottom: 20px;
+    }
+    input[type="text"], input[type="password"] {
+      padding: 8px;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h1>Room-wise Timetable Lookup</h1>
+
+  <div id="form-area">
+    <input type="text" id="roomInput" placeholder="Enter Room No (e.g., R-1)" />
+    <input type="password" id="passwordInput" placeholder="Enter Password" />
+    <button onclick="loadTimetable()">Show Timetable</button>
+  </div>
+
+  <table id="timetable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Room No</th>
+        <th>9 to 10</th>
+        <th>10 to 11</th>
+        <th>11 to 12</th>
+        <th>12 to 1</th>
+        <th>1 to 2</th>
+        <th>2 to 3</th>
+        <th>3 to 4</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+      authDomain: "gcw-timetable.firebaseapp.com",
+      databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "gcw-timetable",
+      storageBucket: "gcw-timetable.appspot.com",
+      messagingSenderId: "654415403426",
+      appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const timeSlots = [
+      "9 to 10", "10 to 11", "11 to 12", "12 to 1",
+      "1 to 2", "2 to 3", "3 to 4"
+    ];
+
+    function stringToColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const h = Math.abs(hash) % 360;
+      return `hsl(${h}, 70%, 85%)`;
+    }
+
+    function loadTimetable() {
+      const roomNo = document.getElementById("roomInput").value.trim();
+      const password = document.getElementById("passwordInput").value.trim();
+      const correctPassword = "admin123";  // You can change this
+
+      if (!roomNo || !password) {
+        alert("Please enter both Room No and Password.");
+        return;
+      }
+
+      if (password !== correctPassword) {
+        alert("Incorrect password.");
+        return;
+      }
+
+      db.ref("FlattenedTT").once("value")
+        .then(snapshot => {
+          const data = snapshot.val();
+          if (!data) {
+            alert("No data found.");
+            return;
+          }
+
+          const roomMap = {};
+          const colorMap = {};
+
+          Object.keys(data).forEach(key => {
+            const entry = data[key];
+            const room = entry["Room_No"]?.trim();
+            const time = entry["Time_Slot"]?.trim();
+            const className = entry["Class"]?.trim();
+            const teacher = entry["Teacher"]?.trim() || "⚠ Missing Teacher";
+            const section = entry["Section"]?.trim();
+            const days = entry["Days"]?.trim();
+
+            if (!room || !time || !className || !days) return;
+
+            if (room !== roomNo) return; // Filter by entered room number
+
+            if (!roomMap[room]) {
+              roomMap[room] = {};
+              timeSlots.forEach(slot => roomMap[room][slot] = []);
+            }
+
+            const info = {
+              text: `${className} - ${section}\n${teacher} (${days})`,
+              class: className,
+              daysList: days.split(",").map(d => d.trim())
+            };
+
+            roomMap[room][time].push(info);
+
+            if (!colorMap[className]) {
+              colorMap[className] = stringToColor(className);
+            }
+          });
+
+          const tbody = document.querySelector("#timetable tbody");
+          tbody.innerHTML = ""; // clear previous
+
+          const table = document.getElementById("timetable");
+          table.style.display = "table";
+
+          Object.keys(roomMap).forEach(room => {
+            const row = document.createElement("tr");
+
+            const roomCell = document.createElement("td");
+            roomCell.textContent = room;
+            row.appendChild(roomCell);
+
+            timeSlots.forEach(slot => {
+              const cell = document.createElement("td");
+              const entries = roomMap[room][slot];
+
+              // ✅ Count total day mentions (including duplicates)
+              let totalDays = 0;
+              entries.forEach(entry => {
+                totalDays += entry.daysList.length;
+              });
+
+              if (totalDays > 6) {
+                cell.classList.add("overbooked");
+              } else if (totalDays < 6 && totalDays > 0) {
+                cell.classList.add("underbooked");
+              }
+
+              entries.forEach(entry => {
+                const div = document.createElement("div");
+                div.textContent = entry.text;
+                div.style.backgroundColor = colorMap[entry.class];
+                div.style.borderRadius = "6px";
+                div.style.padding = "4px";
+                div.style.marginBottom = "6px";
+                div.style.border = "1px solid #aaa";
+                cell.appendChild(div);
+              });
+
+              row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.error("Firebase fetch error:", error);
+          alert("Failed to load timetable.");
+        });
+    }
+  </script>
+</body>
+</html>
