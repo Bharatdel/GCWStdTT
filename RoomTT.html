@@ -38,7 +38,7 @@
     #form-area {
       margin-bottom: 20px;
     }
-    input[type="text"], input[type="password"] {
+    select, input[type="password"] {
       padding: 8px;
       font-size: 14px;
       margin-right: 10px;
@@ -57,7 +57,9 @@
   <h1>Room-wise Timetable Lookup</h1>
 
   <div id="form-area">
-    <input type="text" id="roomInput" placeholder="Enter Room No (e.g., R-1)" />
+    <select id="roomSelect">
+      <option value="">Loading rooms...</option>
+    </select>
     <input type="password" id="passwordInput" placeholder="Enter Password" />
     <button onclick="loadTimetable()">Show Timetable</button>
   </div>
@@ -106,13 +108,32 @@
       return `hsl(${h}, 70%, 85%)`;
     }
 
-    function loadTimetable() {
-      const roomNo = document.getElementById("roomInput").value.trim();
-      const password = document.getElementById("passwordInput").value.trim();
-      const correctPassword = "admin123";  // You can change this
+    // Populate dropdown with unique room numbers
+    function populateRoomDropdown(data) {
+      const roomSet = new Set();
+      Object.values(data).forEach(entry => {
+        if (entry["Room_No"]) {
+          roomSet.add(entry["Room_No"].trim());
+        }
+      });
 
-      if (!roomNo || !password) {
-        alert("Please enter both Room No and Password.");
+      const roomSelect = document.getElementById("roomSelect");
+      roomSelect.innerHTML = '<option value="">Select Room</option>';
+      [...roomSet].sort().forEach(room => {
+        const option = document.createElement("option");
+        option.value = room;
+        option.textContent = room;
+        roomSelect.appendChild(option);
+      });
+    }
+
+    function loadTimetable() {
+      const room = document.getElementById("roomSelect").value;
+      const password = document.getElementById("passwordInput").value.trim();
+      const correctPassword = "admin123"; // Change as needed
+
+      if (!room || !password) {
+        alert("Please select Room and enter Password.");
         return;
       }
 
@@ -134,16 +155,15 @@
 
           Object.keys(data).forEach(key => {
             const entry = data[key];
-            const room = entry["Room_No"]?.trim();
+            const entryRoom = entry["Room_No"]?.trim();
             const time = entry["Time_Slot"]?.trim();
             const className = entry["Class"]?.trim();
             const teacher = entry["Teacher"]?.trim() || "⚠ Missing Teacher";
             const section = entry["Section"]?.trim();
             const days = entry["Days"]?.trim();
 
-            if (!room || !time || !className || !days) return;
-
-            if (room !== roomNo) return; // Filter by entered room number
+            if (!entryRoom || !time || !className || !days) return;
+            if (entryRoom !== room) return;
 
             if (!roomMap[room]) {
               roomMap[room] = {};
@@ -164,56 +184,65 @@
           });
 
           const tbody = document.querySelector("#timetable tbody");
-          tbody.innerHTML = ""; // clear previous
-
+          tbody.innerHTML = ""; // Clear old
           const table = document.getElementById("timetable");
-          table.style.display = "table";
+          table.style.display = "none";
 
-          Object.keys(roomMap).forEach(room => {
-            const row = document.createElement("tr");
+          if (!roomMap[room]) {
+            alert("No timetable found for selected room.");
+            return;
+          }
 
-            const roomCell = document.createElement("td");
-            roomCell.textContent = room;
-            row.appendChild(roomCell);
+          const row = document.createElement("tr");
+          const roomCell = document.createElement("td");
+          roomCell.textContent = room;
+          row.appendChild(roomCell);
 
-            timeSlots.forEach(slot => {
-              const cell = document.createElement("td");
-              const entries = roomMap[room][slot];
+          timeSlots.forEach(slot => {
+            const cell = document.createElement("td");
+            const entries = roomMap[room][slot];
 
-              // ✅ Count total day mentions (including duplicates)
-              let totalDays = 0;
-              entries.forEach(entry => {
-                totalDays += entry.daysList.length;
-              });
-
-              if (totalDays > 6) {
-                cell.classList.add("overbooked");
-              } else if (totalDays < 6 && totalDays > 0) {
-                cell.classList.add("underbooked");
-              }
-
-              entries.forEach(entry => {
-                const div = document.createElement("div");
-                div.textContent = entry.text;
-                div.style.backgroundColor = colorMap[entry.class];
-                div.style.borderRadius = "6px";
-                div.style.padding = "4px";
-                div.style.marginBottom = "6px";
-                div.style.border = "1px solid #aaa";
-                cell.appendChild(div);
-              });
-
-              row.appendChild(cell);
+            let totalDays = 0;
+            entries.forEach(entry => {
+              totalDays += entry.daysList.length;
             });
 
-            tbody.appendChild(row);
+            if (totalDays > 6) {
+              cell.classList.add("overbooked");
+            } else if (totalDays < 6 && totalDays > 0) {
+              cell.classList.add("underbooked");
+            }
+
+            entries.forEach(entry => {
+              const div = document.createElement("div");
+              div.textContent = entry.text;
+              div.style.backgroundColor = colorMap[entry.class];
+              div.style.borderRadius = "6px";
+              div.style.padding = "4px";
+              div.style.marginBottom = "6px";
+              div.style.border = "1px solid #aaa";
+              cell.appendChild(div);
+            });
+
+            row.appendChild(cell);
           });
+
+          tbody.appendChild(row);
+          table.style.display = "table";
         })
         .catch(error => {
           console.error("Firebase fetch error:", error);
           alert("Failed to load timetable.");
         });
     }
+
+    // Fetch data once to populate dropdown on page load
+    window.onload = function () {
+      db.ref("FlattenedTT").once("value").then(snapshot => {
+        const data = snapshot.val();
+        if (data) populateRoomDropdown(data);
+      });
+    };
   </script>
 </body>
 </html>
