@@ -25,13 +25,13 @@
       text-align: center;
       margin-bottom: 1rem;
     }
-    input[type="text"] {
+    select, input[type="password"] {
       padding: 0.6rem 0.8rem;
       font-size: 1rem;
       border: 2px solid #ccc;
       border-radius: 6px;
       width: 70%;
-      margin-right: 1rem;
+      margin-bottom: 1rem;
     }
     button {
       padding: 0.6rem 1rem;
@@ -42,6 +42,7 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      margin-top: 1rem;
     }
     button:hover {
       background: #357abd;
@@ -67,6 +68,7 @@
       background-color: #dbeaff;
     }
   </style>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
@@ -83,6 +85,104 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    async function populateTeacherDropdown() {
+      const snapshot = await db.ref("FlattenedTT").once("value");
+      const data = snapshot.val();
+      const teachers = new Set();
+
+      Object.values(data || {}).forEach(row => {
+        const name = (row.Teacher || "").trim();
+        if (name) teachers.add(name);
+      });
+
+      const teacherList = [...teachers].sort();
+      const dropdown = document.getElementById("teacherDropdown");
+      dropdown.innerHTML = `<option value="">-- Select a Teacher --</option>`;
+      teacherList.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        dropdown.appendChild(option);
+      });
+    }
+
+    async function lookupTimetable() {
+      const teacherInput = document.getElementById("teacherDropdown").value.trim().toLowerCase();
+      const password = document.getElementById("adminPass").value.trim();
+      const output = document.getElementById("output");
+      output.innerHTML = "";
+
+      if (!teacherInput) {
+        alert("Please select a teacher.");
+        return;
+      }
+
+      if (password !== "Gcw@1998") {
+        alert("Incorrect password. Access denied.");
+        return;
+      }
+
+      try {
+        const snapshot = await db.ref("FlattenedTT").once("value");
+        const data = snapshot.val();
+
+        const matched = Object.values(data || {})
+          .filter(row => (row.Teacher || "").trim().toLowerCase() === teacherInput)
+          .sort((a, b) => {
+            const order = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
+            return order.indexOf(a.Time_Slot) - order.indexOf(b.Time_Slot);
+          });
+
+        if (matched.length === 0) {
+          output.innerHTML = `<p style="color:red;">No timetable entries found for teacher: ${teacherInput}</p>`;
+          return;
+        }
+
+        let html = `
+          <div class="table-wrapper">
+          <table>
+            <tr>
+              <th>Class</th>
+              <th>Time Slot</th>
+              <th>Subject</th>
+              <th>Section</th>
+              <th>Days</th>
+              <th>Teacher</th>
+              <th>Room No.</th>
+            </tr>
+        `;
+
+        matched.forEach(row => {
+          html += `
+            <tr>
+              <td>${row.Class || ''}</td>
+              <td>${row.Time_Slot || ''}</td>
+              <td>${row.Subject || ''}</td>
+              <td>${row.Section || ''}</td>
+              <td>${row.Days || ''}</td>
+              <td>${row.Teacher || ''}</td>
+              <td>${row.Room_No || ''}</td>
+            </tr>
+          `;
+        });
+
+        html += "</table></div>";
+        output.innerHTML = html;
+
+      } catch (err) {
+        console.error("Error fetching timetable:", err);
+        output.innerHTML = `<p style="color:red;">Failed to fetch data. Try again later.</p>`;
+      }
+    }
+
+    function togglePassword() {
+      const passField = document.getElementById("adminPass");
+      passField.type = passField.type === "password" ? "text" : "password";
+    }
+
+    // Populate dropdown on page load
+    window.onload = populateTeacherDropdown;
   </script>
 </head>
 <body>
@@ -90,101 +190,23 @@
     <h1>GCW Karnal - Teacher Timetable Lookup</h1>
     <p><strong>Note:</strong> This page is for administrative use only.</p>
 
-    <label for="teacherName">Enter Teacher's Name:</label><br>
-    <input type="text" id="teacherName" placeholder="e.g., Meena, Rajpal" />
-    
+    <label for="teacherDropdown">Select Teacher:</label><br>
+    <select id="teacherDropdown">
+      <option value="">Loading...</option>
+    </select>
+
     <br><br>
-    
+
     <label for="adminPass">Enter Admin Password:</label><br>
-    
     <input type="password" id="adminPass" placeholder="Password for access" />
     <br><br>
     <label><input type="checkbox" id="showPassToggle" onchange="togglePassword()"> Show Password</label>
 
     <br><br>
-    
-    <button onclick="lookupTimetable()">Search</button>
 
+    <button onclick="lookupTimetable()">Search</button>
 
     <div id="output" class="result"></div>
   </div>
-
-  <script>
-  async function lookupTimetable() {
-    const teacherInput = document.getElementById("teacherName").value.trim().toLowerCase();
-    const password = document.getElementById("adminPass").value.trim();
-    const output = document.getElementById("output");
-    output.innerHTML = "";
-
-    if (!teacherInput) {
-      alert("Please enter a teacher name.");
-      return;
-    }
-
-    if (password !== "Gcw@1998") {
-      alert("Incorrect password. Access denied.");
-      return;
-    }
-
-    try {
-      const snapshot = await db.ref("FlattenedTT").once("value");
-      const data = snapshot.val();
-
-      const matched = Object.values(data || {})
-      .filter(row => (row.Teacher || "").trim().toLowerCase() === teacherInput)
-      .sort((a, b) => {
-        const order = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
-        return order.indexOf(a.Time_Slot) - order.indexOf(b.Time_Slot);
-      });
-
-
-      if (matched.length === 0) {
-        output.innerHTML = `<p style="color:red;">No timetable entries found for teacher: ${teacherInput}</p>`;
-        return;
-      }
-
-      let html = `
-        <div class="table-wrapper">
-        <table>
-          <tr>
-            <th>Class</th>
-            <th>Time Slot</th>
-            <th>Subject</th>
-            <th>Section</th>
-            <th>Days</th>
-            <th>Teacher</th>
-            <th>Room No.</th>
-          </tr>
-      `;
-
-      matched.forEach(row => {
-        html += `
-          <tr>
-            <td>${row.Class || ''}</td>
-            <td>${row.Time_Slot || ''}</td>
-            <td>${row.Subject || ''}</td>
-            <td>${row.Section || ''}</td>
-            <td>${row.Days || ''}</td>
-            <td>${row.Teacher || ''}</td>
-            <td>${row.Room_No || ''}</td>
-          </tr>
-        `;
-      });
-
-      html += "</table></div>";
-      output.innerHTML = html;
-
-    } catch (err) {
-      console.error("Error fetching timetable:", err);
-      output.innerHTML = `<p style="color:red;">Failed to fetch data. Try again later.</p>`;
-    }
-  }
-</script>
-  <script>
-  function togglePassword() {
-    const passField = document.getElementById("adminPass");
-    passField.type = passField.type === "password" ? "text" : "password";
-  }
-</script>
 </body>
 </html>
