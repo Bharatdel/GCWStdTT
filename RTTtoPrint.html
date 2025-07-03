@@ -2,159 +2,159 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>GCW KARNAL - Student Section Lookup</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GCW KARNAL Room Timetable</title>
   <style>
-    :root {
-      --primary-color: #c2185b; /* deep rose pink */
-      --accent-color: #6a1b9a;  /* deep purple */
-      --bg-color: #fff0f5;
-      --card-bg: #ffffff;
-      --text-color: #222;
-      --table-header-bg: #6a1b9a;
-      --table-header-color: #fff;
+    @page {
+      size: A4 portrait;
+      margin: 20mm;
+    }
+
+    @media print {
+      body {
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+      }
+      .controls {
+        display: none;
+      }
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg-color);
+      font-family: Arial, sans-serif;
+      color: #000;
+      background: white;
+      padding: 0;
       margin: 0;
-      padding: 2rem;
-      color: var(--text-color);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
     }
 
-    .container {
-      background: var(--card-bg);
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 5px 20px rgba(194, 24, 91, 0.2);
-      width: 100%;
-      max-width: 650px;
-    }
-
-    h1, h2 {
+    .controls {
+      margin: 20px;
       text-align: center;
-      color: var(--accent-color);
-      margin-top: 0.5rem;
     }
 
-    img {
-      display: block;
-      max-width: 80px;
-      margin: 0 auto 1rem;
+    .controls select, .controls button {
+      padding: 12px 18px;
+      font-size: 18px;
+      margin: 10px;
     }
 
-    form {
+    .print-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
-    input[type="text"] {
-      padding: 0.6rem 0.8rem;
-      font-size: 1rem;
-      border: 2px solid #ccc;
-      border-radius: 6px;
+    .print-container {
+      width: 100%;
+      max-width: 780px;
+      transform-origin: top left;
     }
 
-    input[type="text"]:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 8px rgba(194, 24, 91, 0.3);
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 20px;
     }
 
-    button {
-      padding: 0.75rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: white;
-      background: var(--primary-color);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+    .header img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      margin-bottom: 10px;
     }
 
-    .result {
-      margin-top: 1.5rem;
-      background: #fce4ec;
-      border: 2px solid var(--primary-color);
-      padding: 1rem;
-      border-radius: 10px;
+    .header h1 {
+      font-size: 36px;
+      margin: 0;
     }
 
-    .responsive-table {
-      display: none;
+    .header h2 {
+      font-size: 28px;
+      margin: 5px 0;
+    }
+
+    .header h3 {
+      font-size: 24px;
+      margin: 10px 0 20px 0;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1rem;
     }
 
     th, td {
-      padding: 0.6rem;
+      border: 2px solid black;
+      padding: 8px;
       text-align: left;
-      border: 1px solid #ccc;
+      vertical-align: middle;
+      font-size: 14px;
     }
 
     th {
-      background: var(--table-header-bg);
-      color: var(--table-header-color);
+      background-color: #eee;
     }
 
-    /* Mobile Responsive Stacking */
-    @media (max-width: 768px) {
-      table {
-        display: none;
-      }
+    .signature-row {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
 
-      .responsive-table {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .card-row {
-        border: 2px solid var(--accent-color);
-        padding: 1rem;
-        border-radius: 10px;
-        background: white;
-        box-shadow: 0 2px 5px rgba(106, 27, 154, 0.2);
-      }
-
-      .card-row p {
-        margin: 0.4rem 0;
-      }
-
-      .card-row p span {
-        font-weight: bold;
-        color: var(--accent-color);
-      }
+    .signature {
+      width: 40%;
+      border-top: 2px solid black;
+      text-align: center;
+      padding-top: 10px;
     }
   </style>
-</head>
-<body>
-  <div class="container">
-    <img src="Logo.jpg" alt="College Logo" />
-    <h1>GCW KARNAL</h1>
-    <h2>Know Your Detailed Timetable</h2>
-
-    <form id="rollForm">
-      <label for="rollno">Enter Your Complete Roll Number:</label>
-      <input type="text" id="rollno" name="rollno" required />
-      <button type="submit">Get Section Info</button>
-    </form>
-
-    <div id="result" class="result" style="display:none;"></div>
-  </div>
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="controls">
+    <select id="roomSelect">
+      <option value="">Loading room list...</option>
+    </select>
+    <button onclick="generateTable()">Generate Timetable</button>
+    <button onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <div class="print-wrapper">
+    <div class="print-container" id="printContainer">
+      <div class="header">
+        <img src="logo.png" alt="College Logo" />
+        <h1>GCW KARNAL</h1>
+        <h2>Time Table for the Session 2025–26</h2>
+        <h3 id="roomHeading">Room No:</h3>
+      </div>
+
+      <table id="timetable">
+        <thead>
+          <tr>
+            <th>Time Slot</th>
+            <th>Class – Section</th>
+            <th>Teacher</th>
+            <th>Days</th>
+          </tr>
+        </thead>
+        <tbody id="timetable-body"></tbody>
+      </table>
+
+      <div class="signature-row">
+        <div class="signature">Time Table Committee</div>
+        <div class="signature">Principal</div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -169,100 +169,99 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const timeSlots = [
+      "9 to 10", "10 to 11", "11 to 12", "12 to 1",
+      "1 to 2", "2 to 3", "3 to 4"
+    ];
 
-    document.getElementById("rollForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      fetchSchedule();
-    });
+    let fullData = {};
 
-    async function fetchSchedule() {
-      const rollNo = document.getElementById("rollno").value.trim();
-      const output = document.getElementById("result");
-      output.style.display = 'block';
-
-      if (!rollNo) {
-        alert("Please enter a roll number.");
-        return;
-      }
-
-      output.innerHTML = "Loading...";
-
-      try {
-        const studentSnap = await db.ref(`Student/${rollNo}`).once('value');
-        if (!studentSnap.exists()) {
-          output.innerHTML = `<p style="color: red;">No student found for Roll No: ${rollNo}</p>`;
-          return;
+    function populateRoomDropdown() {
+      const roomSet = new Set();
+      Object.values(fullData).forEach(entry => {
+        if (entry["Room_No"]) {
+          roomSet.add(entry["Room_No"].trim());
         }
+      });
 
-        const student = studentSnap.val();
-        const subjectSectionPairs = [];
-
-        for (let i = 1; i <= 8; i++) {
-          const sub = student[`sub${i}`];
-          const sec = student[`sec${i}`];
-          if (sub && sec) {
-            subjectSectionPairs.push(`${sub.trim().toLowerCase()}|${sec.trim().toLowerCase()}`);
-          }
-        }
-
-        const studentClass = student.sem;
-        const ttSnap = await db.ref("FlattenedTT").once('value');
-        const allTT = Object.values(ttSnap.val() || {});
-
-        const matched = allTT.filter(row =>
-          (row.Class || '').trim().toLowerCase() === studentClass.trim().toLowerCase() &&
-          subjectSectionPairs.includes(
-            `${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`
-          )
-        );
-
-        if (matched.length === 0) {
-          output.innerHTML = `<p>No matching timetable entries found for ${student.name}.</p>`;
-          return;
-        }
-
-        let html = `<h3>Schedule for ${student.name}</h3>`;
-
-        // Standard Table
-        html += `<table><tr>
-          <th>Class</th><th>Time</th><th>Subject</th>
-          <th>Section</th><th>Days</th><th>Teacher</th><th>Room</th>
-        </tr>`;
-        matched.forEach(row => {
-          html += `<tr>
-            <td>${row.Class || ''}</td>
-            <td>${row.Time_Slot || ''}</td>
-            <td>${row.Subject || ''}</td>
-            <td>${row.Section || ''}</td>
-            <td>${row.Days || ''}</td>
-            <td>${row.Teacher || ''}</td>
-            <td>${row.Room_No || ''}</td>
-          </tr>`;
-        });
-        html += "</table>";
-
-        // Responsive Stacked View
-        html += `<div class="responsive-table">`;
-        matched.forEach(row => {
-          html += `<div class="card-row">
-            <p><span>Class:</span> ${row.Class || ''}</p>
-            <p><span>Time:</span> ${row.Time_Slot || ''}</p>
-            <p><span>Subject:</span> ${row.Subject || ''}</p>
-            <p><span>Section:</span> ${row.Section || ''}</p>
-            <p><span>Days:</span> ${row.Days || ''}</p>
-            <p><span>Teacher:</span> ${row.Teacher || ''}</p>
-            <p><span>Room:</span> ${row.Room_No || ''}</p>
-          </div>`;
-        });
-        html += `</div>`;
-
-        output.innerHTML = html;
-
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        output.innerHTML = "<p style='color:red;'>Error fetching timetable. Please try again later.</p>";
-      }
+      const roomSelect = document.getElementById("roomSelect");
+      roomSelect.innerHTML = '<option value="">Select Room</option>';
+      [...roomSet].sort().forEach(room => {
+        const option = document.createElement("option");
+        option.value = room;
+        option.textContent = room;
+        roomSelect.appendChild(option);
+      });
     }
+
+    function generateTable() {
+      const room = document.getElementById("roomSelect").value;
+      const tbody = document.getElementById("timetable-body");
+      const roomHeading = document.getElementById("roomHeading");
+      tbody.innerHTML = "";
+      roomHeading.textContent = `Room No: ${room}`;
+
+      const roomMap = {};
+      timeSlots.forEach(slot => roomMap[slot] = []);
+
+      Object.values(fullData).forEach(entry => {
+        const entryRoom = entry["Room_No"]?.trim();
+        const slot = entry["Time_Slot"]?.trim();
+        if (entryRoom !== room || !slot) return;
+
+        const className = entry["Class"]?.trim() || "";
+        const section = entry["Section"]?.trim() || "";
+        const teacherName = entry["Teacher"]?.trim();
+        const teacher = teacherName ? `Dr. ${teacherName}` : "⚠ Missing Teacher";
+        const days = entry["Days"]?.trim() || "";
+
+        roomMap[slot].push({ class: className, section, teacher, days });
+      });
+
+      timeSlots.forEach(slot => {
+        const entries = roomMap[slot];
+        if (entries.length === 0) {
+          const tr = document.createElement("tr");
+          const tdTime = document.createElement("td");
+          tdTime.textContent = slot;
+          const tdEmpty1 = document.createElement("td");
+          const tdEmpty2 = document.createElement("td");
+          const tdEmpty3 = document.createElement("td");
+          tr.appendChild(tdTime);
+          tr.appendChild(tdEmpty1);
+          tr.appendChild(tdEmpty2);
+          tr.appendChild(tdEmpty3);
+          tbody.appendChild(tr);
+        } else {
+          entries.forEach((entry, index) => {
+            const tr = document.createElement("tr");
+            if (index === 0) {
+              const tdTime = document.createElement("td");
+              tdTime.rowSpan = entries.length;
+              tdTime.textContent = slot;
+              tr.appendChild(tdTime);
+            }
+            const tdClass = document.createElement("td");
+            tdClass.textContent = `${entry.class} – ${entry.section}`;
+            const tdTeacher = document.createElement("td");
+            tdTeacher.textContent = entry.teacher;
+            const tdDays = document.createElement("td");
+            tdDays.textContent = entry.days;
+            tr.appendChild(tdClass);
+            tr.appendChild(tdTeacher);
+            tr.appendChild(tdDays);
+            tbody.appendChild(tr);
+          });
+        }
+      });
+    }
+
+    window.onload = function () {
+      db.ref("FlattenedTT").once("value").then(snapshot => {
+        fullData = snapshot.val() || {};
+        populateRoomDropdown();
+      });
+    };
   </script>
 </body>
 </html>
