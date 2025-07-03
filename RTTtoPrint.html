@@ -12,91 +12,92 @@
         display: none;
       }
     }
-.page-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh; /* full page height */
-  padding: 30px 0;
-  box-sizing: border-box;
-}
 
-    body {
+    html, body {
+      height: 100%;
+      margin: 0;
       font-family: Arial, sans-serif;
       color: #000;
       background: white;
-      padding: 30px;
+    }
+
+    .page-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     .print-container {
       width: 100%;
       max-width: 100%;
-      margin: 0 auto;
+      margin: auto;
+      page-break-inside: avoid;
     }
 
     h1, h2, h3 {
       text-align: center;
-      margin: 10px 0;
+      margin: 6px 0;
     }
 
     h1 {
-      font-size: 48px;
-      font-weight: bold;
+      font-size: 38px;
     }
 
     h2 {
-      font-size: 36px;
+      font-size: 30px;
     }
 
     h3 {
-      font-size: 32px;
-      margin-bottom: 30px;
+      font-size: 26px;
+      margin-bottom: 20px;
     }
 
     table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 50px;
-  font-size: 46pt; /* Increased to fit one A4 */
-}
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      font-size: 18px;
+    }
 
-th, td {
-  border: 2px solid #000;
-  padding: 12px; /* slightly reduced to fit */
-  text-align: left;
-  vertical-align: middle;
-  font-weight: bold;
-}
-
+    th, td {
+      border: 1.5px solid #000;
+      padding: 10px;
+      text-align: left;
+      vertical-align: middle;
+      font-weight: bold;
+    }
 
     th {
       background: #eee;
     }
 
     .signature-row {
-      margin-top: 80px;
+      margin-top: 40px;
       display: flex;
       justify-content: space-between;
-      font-size: 24px;
+      font-size: 18px;
       padding: 0 20px;
     }
 
     .signature {
       width: 40%;
-      border-top: 2px solid #000;
+      border-top: 1.5px solid #000;
       text-align: center;
-      padding-top: 10px;
+      padding-top: 6px;
     }
 
     .controls {
-      margin-bottom: 20px;
+      margin: 20px 0;
       text-align: center;
     }
 
     .controls select, .controls button {
-      padding: 14px 20px;
-      font-size: 22px;
-      margin: 10px;
+      padding: 12px 18px;
+      font-size: 18px;
+      margin: 6px;
     }
   </style>
 
@@ -113,7 +114,6 @@ th, td {
     <button onclick="window.print()">Print / Save as PDF</button>
   </div>
 
-  <!-- WRAPPER for CENTERING -->
   <div class="page-wrapper">
     <div class="print-container">
       <h1>GCW KARNAL</h1>
@@ -139,7 +139,6 @@ th, td {
     </div>
   </div>
 
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
@@ -153,6 +152,7 @@ th, td {
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
     const timeSlots = [
       "9 to 10", "10 to 11", "11 to 12", "12 to 1",
       "1 to 2", "2 to 3", "3 to 4"
@@ -197,8 +197,6 @@ th, td {
         const section = entry["Section"]?.trim() || "";
         const teacherName = entry["Teacher"]?.trim();
         const teacher = teacherName ? `Dr. ${teacherName}` : "⚠ Missing Teacher";
-        
-        //const teacher = entry["Teacher"]?.trim() || "⚠ Missing";
         const days = entry["Days"]?.trim() || "";
 
         roomMap[slot].push({
@@ -210,74 +208,53 @@ th, td {
       });
 
       timeSlots.forEach(slot => {
-  const entries = roomMap[slot];
-
-  // Always add a row, even if empty
-  const tr = document.createElement("tr");
-
-  const tdTime = document.createElement("td");
-  tdTime.textContent = slot;
-  tr.appendChild(tdTime);
-
-  if (entries.length > 0) {
-    const entry = entries[0];  // assume single entry per slot
-    const tdClass = document.createElement("td");
-    tdClass.textContent = `${entry.class} – ${entry.section}`;
-    const tdTeacher = document.createElement("td");
-    tdTeacher.textContent = entry.teacher;
-    const tdDays = document.createElement("td");
-    tdDays.textContent = entry.days;
-
-    tr.appendChild(tdClass);
-    tr.appendChild(tdTeacher);
-    tr.appendChild(tdDays);
-  } else {
-    // Fill with blanks for unused time slot
-    tr.appendChild(document.createElement("td"));
-    tr.appendChild(document.createElement("td"));
-    tr.appendChild(document.createElement("td"));
-  }
-
-  tbody.appendChild(tr);
-});
-
-
-        entries.forEach((entry, index) => {
+        const entries = roomMap[slot];
+        if (entries.length === 0) {
           const tr = document.createElement("tr");
-
-          if (index === 0) {
-            const tdTime = document.createElement("td");
-            tdTime.rowSpan = entries.length;
-            tdTime.textContent = slot;
-            tr.appendChild(tdTime);
-          }
-
+          const tdTime = document.createElement("td");
+          tdTime.textContent = slot;
           const tdClass = document.createElement("td");
-          tdClass.textContent = `${entry.class} – ${entry.section}`;
           const tdTeacher = document.createElement("td");
-          tdTeacher.textContent = entry.teacher;
           const tdDays = document.createElement("td");
-          tdDays.textContent = entry.days;
-
+          tr.appendChild(tdTime);
           tr.appendChild(tdClass);
           tr.appendChild(tdTeacher);
           tr.appendChild(tdDays);
           tbody.appendChild(tr);
-        });
+        } else {
+          entries.forEach((entry, index) => {
+            const tr = document.createElement("tr");
+            if (index === 0) {
+              const tdTime = document.createElement("td");
+              tdTime.rowSpan = entries.length;
+              tdTime.textContent = slot;
+              tr.appendChild(tdTime);
+            }
+            const tdClass = document.createElement("td");
+            tdClass.textContent = `${entry.class} – ${entry.section}`;
+            const tdTeacher = document.createElement("td");
+            tdTeacher.textContent = entry.teacher;
+            const tdDays = document.createElement("td");
+            tdDays.textContent = entry.days;
+
+            tr.appendChild(tdClass);
+            tr.appendChild(tdTeacher);
+            tr.appendChild(tdDays);
+            tbody.appendChild(tr);
+          });
+        }
       });
     }
 
-    // Load data from Firebase and populate dropdown on page load
     window.onload = function () {
-  db.ref("FlattenedTT").once("value").then(snapshot => {
-    fullData = snapshot.val() || {};
-    populateRoomDropdown();
-  }).catch(error => {
-    console.error("Error loading room list:", error);
-    alert("Failed to load room list from database.");
-  });
-};
-
+      db.ref("FlattenedTT").once("value").then(snapshot => {
+        fullData = snapshot.val() || {};
+        populateRoomDropdown();
+      }).catch(err => {
+        console.error("Firebase load error:", err);
+        alert("Failed to load data. Check Firebase access or network.");
+      });
+    };
   </script>
 </body>
 </html>
