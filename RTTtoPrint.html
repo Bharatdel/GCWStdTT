@@ -54,19 +54,20 @@
     }
 
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 50px;
-      font-size: 28px;
-    }
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 50px;
+  font-size: 46pt; /* Increased to fit one A4 */
+}
 
-    th, td {
-      border: 2px solid #000;
-      padding: 18px;
-      text-align: left;
-      vertical-align: middle;
-      font-weight: bold;
-    }
+th, td {
+  border: 2px solid #000;
+  padding: 12px; /* slightly reduced to fit */
+  text-align: left;
+  vertical-align: middle;
+  font-weight: bold;
+}
+
 
     th {
       background: #eee;
@@ -209,8 +210,37 @@
       });
 
       timeSlots.forEach(slot => {
-        const entries = roomMap[slot];
-        if (entries.length === 0) return;
+  const entries = roomMap[slot];
+
+  // Always add a row, even if empty
+  const tr = document.createElement("tr");
+
+  const tdTime = document.createElement("td");
+  tdTime.textContent = slot;
+  tr.appendChild(tdTime);
+
+  if (entries.length > 0) {
+    const entry = entries[0];  // assume single entry per slot
+    const tdClass = document.createElement("td");
+    tdClass.textContent = `${entry.class} – ${entry.section}`;
+    const tdTeacher = document.createElement("td");
+    tdTeacher.textContent = entry.teacher;
+    const tdDays = document.createElement("td");
+    tdDays.textContent = entry.days;
+
+    tr.appendChild(tdClass);
+    tr.appendChild(tdTeacher);
+    tr.appendChild(tdDays);
+  } else {
+    // Fill with blanks for unused time slot
+    tr.appendChild(document.createElement("td"));
+    tr.appendChild(document.createElement("td"));
+    tr.appendChild(document.createElement("td"));
+  }
+
+  tbody.appendChild(tr);
+});
+
 
         entries.forEach((entry, index) => {
           const tr = document.createElement("tr");
