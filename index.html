@@ -233,7 +233,9 @@
       }
 
       // --- Timetable Table ---
-      let html = `<h3>Schedule for ${student.name}</h3>
+      const properName = student.name.replace(/\b\w/g, c => c.toUpperCase());
+      
+      let html = `<h3>Schedule for ${properName}</h3>
       <h4> Following is the listing for all theory classes only (kindly contact respective department for lab. classes) </h4>
       <table>
         <tr>
