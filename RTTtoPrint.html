@@ -269,11 +269,15 @@ th, td {
 
     // Load data from Firebase and populate dropdown on page load
     window.onload = function () {
-      db.ref("FlattenedTT").once("value").then(snapshot => {
-        fullData = snapshot.val() || {};
-        populateRoomDropdown();
-      });
-    };
+  db.ref("FlattenedTT").once("value").then(snapshot => {
+    fullData = snapshot.val() || {};
+    populateRoomDropdown();
+  }).catch(error => {
+    console.error("Error loading room list:", error);
+    alert("Failed to load room list from database.");
+  });
+};
+
   </script>
 </body>
 </html>
