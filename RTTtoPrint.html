@@ -2,20 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>GCW KARNAL - Student Section Lookup</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Student Section Lookup</title>
   <style>
     :root {
-      --primary-color: #6a0572;     /* deep plum */
-      --highlight-color: #ff6f61;   /* coral red */
-      --bg-color: #fdf0f5;          /* soft pink background */
-      --card-bg: #fff;
-      --text-color: #2c2c2c;
-      --border-color: #b50051;
-      --header-bg: #6a0572;
-      --header-text: #fff;
-      --input-border: #d17fc1;
-      --alt-row: #fff7fa;
+      --primary-color: #c2185b; /* deep rose pink */
+      --accent-color: #6a1b9a;  /* deep purple */
+      --bg-color: #fff0f5;
+      --card-bg: #ffffff;
+      --text-color: #222;
+      --table-header-bg: #6a1b9a;
+      --table-header-color: #fff;
     }
 
     body {
@@ -23,125 +20,120 @@
       background: var(--bg-color);
       margin: 0;
       padding: 2rem;
+      color: var(--text-color);
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
-      color: var(--text-color);
     }
 
     .container {
       background: var(--card-bg);
       padding: 2rem;
-      border-radius: 14px;
-      box-shadow: 0 6px 20px rgba(106, 5, 114, 0.25);
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(194, 24, 91, 0.2);
       width: 100%;
       max-width: 650px;
-      border: 3px solid var(--border-color);
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: var(--accent-color);
+      margin-top: 0.5rem;
     }
 
     img {
       display: block;
+      max-width: 80px;
       margin: 0 auto 1rem;
-      height: 80px;
-    }
-
-    h1 {
-      text-align: center;
-      color: var(--primary-color);
-      margin-bottom: 0.5rem;
-    }
-
-    h2 {
-      text-align: center;
-      color: var(--highlight-color);
-      font-weight: 500;
-      margin-top: 0;
     }
 
     form {
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    label {
-      font-weight: 600;
-      color: var(--primary-color);
     }
 
     input[type="text"] {
-      padding: 0.7rem 1rem;
+      padding: 0.6rem 0.8rem;
       font-size: 1rem;
-      border: 2px solid var(--input-border);
-      border-radius: 10px;
-      transition: all 0.3s ease;
+      border: 2px solid #ccc;
+      border-radius: 6px;
     }
 
     input[type="text"]:focus {
       border-color: var(--primary-color);
-      box-shadow: 0 0 8px rgba(106, 5, 114, 0.3);
-      outline: none;
+      box-shadow: 0 0 8px rgba(194, 24, 91, 0.3);
     }
 
     button {
-      padding: 0.8rem;
+      padding: 0.75rem;
       font-size: 1.1rem;
       font-weight: 600;
-      color: #fff;
-      background: linear-gradient(135deg, var(--highlight-color), var(--primary-color));
+      color: white;
+      background: var(--primary-color);
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      opacity: 0.9;
     }
 
     .result {
-      margin-top: 2rem;
-      background: #fff0f5;
+      margin-top: 1.5rem;
+      background: #fce4ec;
       border: 2px solid var(--primary-color);
-      padding: 1.2rem;
-      border-radius: 12px;
+      padding: 1rem;
+      border-radius: 10px;
     }
 
-    .table-wrapper {
-      overflow-x: auto;
-      margin-top: 1rem;
+    .responsive-table {
+      display: none;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.95rem;
-      min-width: 800px;
+      margin-top: 1rem;
     }
 
     th, td {
-      border: 1px solid #ccc;
-      padding: 0.7rem;
+      padding: 0.6rem;
       text-align: left;
-      white-space: nowrap;
+      border: 1px solid #ccc;
     }
 
     th {
-      background-color: var(--header-bg);
-      color: var(--header-text);
-      font-weight: 600;
+      background: var(--table-header-bg);
+      color: var(--table-header-color);
     }
 
-    tr:nth-child(even) td {
-      background-color: var(--alt-row);
-    }
+    /* Mobile Responsive Stacking */
+    @media (max-width: 768px) {
+      table {
+        display: none;
+      }
 
-    h3 {
-      text-align: center;
-      color: var(--primary-color);
-      margin-top: 1rem;
+      .responsive-table {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .card-row {
+        border: 2px solid var(--accent-color);
+        padding: 1rem;
+        border-radius: 10px;
+        background: white;
+        box-shadow: 0 2px 5px rgba(106, 27, 154, 0.2);
+      }
+
+      .card-row p {
+        margin: 0.4rem 0;
+      }
+
+      .card-row p span {
+        font-weight: bold;
+        color: var(--accent-color);
+      }
     }
   </style>
 </head>
@@ -149,7 +141,7 @@
   <div class="container">
     <img src="Logo.jpg" alt="College Logo" />
     <h1>GCW KARNAL</h1>
-    <h2>Know Your Detailed Time Table with Subject-Section</h2>
+    <h2>Know Your Detailed Timetable</h2>
 
     <form id="rollForm">
       <label for="rollno">Enter Your Complete Roll Number:</label>
@@ -229,32 +221,42 @@
           return;
         }
 
-        let html = `<h3>Schedule for ${student.name}</h3><table>
-          <tr>
-            <th>Class</th>
-            <th>Time Slot</th>
-            <th>Subject</th>
-            <th>Section</th>
-            <th>Days</th>
-            <th>Teacher</th>
-            <th>Room No.</th>
-          </tr>`;
+        let html = `<h3>Schedule for ${student.name}</h3>`;
 
+        // Standard Table
+        html += `<table><tr>
+          <th>Class</th><th>Time</th><th>Subject</th>
+          <th>Section</th><th>Days</th><th>Teacher</th><th>Room</th>
+        </tr>`;
         matched.forEach(row => {
-          html += `
-            <tr>
-              <td>${row.Class || ''}</td>
-              <td>${row.Time_Slot || ''}</td>
-              <td>${row.Subject || ''}</td>
-              <td>${row.Section || ''}</td>
-              <td>${row.Days || ''}</td>
-              <td>${row.Teacher || ''}</td>
-              <td>${row.Room_No || ''}</td>
-            </tr>`;
+          html += `<tr>
+            <td>${row.Class || ''}</td>
+            <td>${row.Time_Slot || ''}</td>
+            <td>${row.Subject || ''}</td>
+            <td>${row.Section || ''}</td>
+            <td>${row.Days || ''}</td>
+            <td>${row.Teacher || ''}</td>
+            <td>${row.Room_No || ''}</td>
+          </tr>`;
         });
-
         html += "</table>";
-        output.innerHTML = `<div class="table-wrapper">${html}</div>`;
+
+        // Responsive Stacked View
+        html += `<div class="responsive-table">`;
+        matched.forEach(row => {
+          html += `<div class="card-row">
+            <p><span>Class:</span> ${row.Class || ''}</p>
+            <p><span>Time:</span> ${row.Time_Slot || ''}</p>
+            <p><span>Subject:</span> ${row.Subject || ''}</p>
+            <p><span>Section:</span> ${row.Section || ''}</p>
+            <p><span>Days:</span> ${row.Days || ''}</p>
+            <p><span>Teacher:</span> ${row.Teacher || ''}</p>
+            <p><span>Room:</span> ${row.Room_No || ''}</p>
+          </div>`;
+        });
+        html += `</div>`;
+
+        output.innerHTML = html;
 
       } catch (err) {
         console.error("Error fetching data:", err);
