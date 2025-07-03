@@ -5,52 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Student Section Lookup</title>
   <style>
- <style>
     :root {
-      --primary-color: #d678b5;      /* Rose pink */
-      --secondary-color: #f4d6ec;    /* Light pink */
-      --bg-color: #fff3f9;
-      --text-color: #444;
-      --card-bg: #ffffff;
-      --input-border: #e0a6cc;
-      --input-focus: #c760a5;
-      --accent: #a855f7;
-      --table-header: #f8d5ec;
-      --table-alt-row: #fff5fb;
+      --primary-color: #6a0572;     /* deep plum */
+      --highlight-color: #ff6f61;   /* coral red */
+      --bg-color: #fdf0f5;          /* soft pink background */
+      --card-bg: #fff;
+      --text-color: #2c2c2c;
+      --border-color: #b50051;
+      --header-bg: #6a0572;
+      --header-text: #fff;
+      --input-border: #d17fc1;
+      --alt-row: #fff7fa;
     }
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-color);
       margin: 0;
       padding: 2rem;
-      background: var(--bg-color);
-      color: var(--text-color);
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
+      color: var(--text-color);
     }
 
     .container {
       background: var(--card-bg);
       padding: 2rem;
       border-radius: 14px;
-      box-shadow: 0 6px 18px rgba(213, 120, 181, 0.2);
+      box-shadow: 0 6px 20px rgba(106, 5, 114, 0.25);
       width: 100%;
       max-width: 650px;
-      border: 3px solid var(--primary-color);
-    }
-
-    h1, h2 {
-      text-align: center;
-      color: var(--primary-color);
-      margin: 0.5rem 0;
+      border: 3px solid var(--border-color);
     }
 
     img {
       display: block;
       margin: 0 auto 1rem;
       height: 80px;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--highlight-color);
+      font-weight: 500;
+      margin-top: 0;
     }
 
     form {
@@ -62,19 +68,20 @@
 
     label {
       font-weight: 600;
+      color: var(--primary-color);
     }
 
     input[type="text"] {
       padding: 0.7rem 1rem;
       font-size: 1rem;
       border: 2px solid var(--input-border);
-      border-radius: 8px;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      border-radius: 10px;
+      transition: all 0.3s ease;
     }
 
     input[type="text"]:focus {
-      border-color: var(--input-focus);
-      box-shadow: 0 0 10px rgba(199, 96, 165, 0.3);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 8px rgba(106, 5, 114, 0.3);
       outline: none;
     }
 
@@ -82,8 +89,8 @@
       padding: 0.8rem;
       font-size: 1.1rem;
       font-weight: 600;
-      color: white;
-      background: var(--primary-color);
+      color: #fff;
+      background: linear-gradient(135deg, var(--highlight-color), var(--primary-color));
       border: none;
       border-radius: 10px;
       cursor: pointer;
@@ -91,12 +98,12 @@
     }
 
     button:hover {
-      background: var(--input-focus);
+      opacity: 0.9;
     }
 
     .result {
       margin-top: 2rem;
-      background: var(--secondary-color);
+      background: #fff0f5;
       border: 2px solid var(--primary-color);
       padding: 1.2rem;
       border-radius: 12px;
@@ -109,30 +116,31 @@
 
     table {
       width: 100%;
-      min-width: 800px;
       border-collapse: collapse;
       font-size: 0.95rem;
+      min-width: 800px;
     }
 
     th, td {
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       padding: 0.7rem;
       text-align: left;
       white-space: nowrap;
     }
 
     th {
-      background-color: var(--table-header);
-      color: var(--text-color);
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 600;
     }
 
     tr:nth-child(even) td {
-      background-color: var(--table-alt-row);
+      background-color: var(--alt-row);
     }
 
     h3 {
-      color: var(--primary-color);
       text-align: center;
+      color: var(--primary-color);
       margin-top: 1rem;
     }
   </style>
@@ -152,7 +160,7 @@
     <div id="result" class="result" style="display:none;"></div>
   </div>
 
-  <!-- ✅ Firebase v9 compat SDK -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -204,11 +212,12 @@
             subjectSectionPairs.push(`${sub.trim().toLowerCase()}|${sec.trim().toLowerCase()}`);
           }
         }
+
         const studentClass = student.sem;
         const ttSnap = await db.ref("FlattenedTT").once('value');
         const allTT = Object.values(ttSnap.val() || {});
 
-       const matched = allTT.filter(row =>
+        const matched = allTT.filter(row =>
           (row.Class || '').trim().toLowerCase() === studentClass.trim().toLowerCase() &&
           subjectSectionPairs.includes(
             `${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`
@@ -245,7 +254,6 @@
         });
 
         html += "</table>";
-        
         output.innerHTML = `<div class="table-wrapper">${html}</div>`;
 
       } catch (err) {
