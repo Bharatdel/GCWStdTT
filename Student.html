@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Section Lookup + Free Slot</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f4f4f4;
+      padding: 2rem;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .result, .free-slots {
+      margin-top: 2rem;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #e6f0ff;
+    }
+    .free { background-color: #d4edda; }
+    .occupied { background-color: #f8d7da; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="container">
+  <h1>GCW KARNAL</h1>
+  <h2>Know Your Detailed Time Table</h2>
+  <form id="rollForm">
+    <label for="rollno">Enter Your Roll Number:</label><br />
+    <input type="text" id="rollno" required />
+    <button type="submit">Get Info</button>
+  </form>
+  <div id="result" class="result"></div>
+  <div id="freeslots" class="free-slots"></div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+    authDomain: "gcw-timetable.firebaseapp.com",
+    databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gcw-timetable"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
+
+  document.getElementById("rollForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const rollNo = document.getElementById("rollno").value.trim();
+    const resultDiv = document.getElementById("result");
+    const freeSlotDiv = document.getElementById("freeslots");
+    resultDiv.innerHTML = "Loading...";
+    freeSlotDiv.innerHTML = "";
+
+    const studentSnap = await db.ref(`Student/${rollNo}`).once('value');
+    if (!studentSnap.exists()) {
+      resultDiv.innerHTML = `<p style='color:red;'>Roll No: ${rollNo} not found.</p>`;
+      return;
+    }
+    const student = studentSnap.val();
+    const studentClass = student.sem;
+    const subjectSectionPairs = [];
+    for (let i = 1; i <= 8; i++) {
+      if (student[`sub${i}`] && student[`sec${i}`]) {
+        subjectSectionPairs.push(`${student[`sub${i}`].toLowerCase()}|${student[`sec${i}`].toLowerCase()}`);
+      }
+    }
+
+    const ttSnap = await db.ref("FlattenedTT").once("value");
+    const allTT = Object.values(ttSnap.val() || {});
+    const myTT = allTT.filter(row =>
+      (row.Class || '').trim().toLowerCase() === studentClass.trim().toLowerCase() &&
+      subjectSectionPairs.includes(`${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`)
+    );
+
+    let html = `<h3>Schedule for ${student.name}</h3><table><tr><th>Time Slot</th><th>Subject</th><th>Section</th><th>Days</th><th>Teacher</th><th>Room</th></tr>`;
+    const occupiedMap = {};
+    myTT.forEach(row => {
+      html += `<tr><td>${row.Time_Slot}</td><td>${row.Subject}</td><td>${row.Section}</td><td>${row.Days}</td><td>${row.Teacher}</td><td>${row.Room_No}</td></tr>`;
+      row.Days.split(/[,-]/).forEach(day => {
+        occupiedMap[day.trim()] = occupiedMap[day.trim()] || {};
+        occupiedMap[day.trim()][row.Time_Slot.trim()] = true;
+      });
+    });
+    html += '</table>';
+    resultDiv.innerHTML = html;
+
+    // Build Free Slot Matrix
+    let slotTable = `<h3>Free Slot Visualizer</h3><table><tr><th>Day</th>`;
+    timeSlots.forEach(slot => slotTable += `<th>${slot}</th>`);
+    slotTable += '</tr>';
+    days.forEach(day => {
+      slotTable += `<tr><td>${day}</td>`;
+      timeSlots.forEach(slot => {
+        const occupied = occupiedMap[day]?.[slot];
+        slotTable += `<td class="${occupied ? 'occupied' : 'free'}">${occupied ? 'Busy' : 'Free'}</td>`;
+      });
+      slotTable += '</tr>';
+    });
+    slotTable += '</table>';
+    freeSlotDiv.innerHTML = slotTable;
+  });
+</script>
+</body>
+</html>
