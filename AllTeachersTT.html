@@ -102,6 +102,7 @@
           const teacher = entry["Teacher"]?.trim();
           const time = entry["Time_Slot"]?.trim();
           const className = entry["Class"]?.trim();
+          const subName = entry["Subject"]?.trim();
 
           if (!teacher || !time || !className) return;
 
@@ -111,9 +112,10 @@
           }
 
           const info = {
-            text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nRoom: ${entry["Room_No"] || "-"}`,
+            text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${entry["Subject"] || "-"}\nRoom: ${entry["Room_No"] || "-"}`,
             class: entry["Class"]
           };
+
 
           teacherMap[teacher][time].push(info);
 
