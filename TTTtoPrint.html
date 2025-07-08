@@ -40,16 +40,21 @@
     .header-row {
       font-size: 22px;
       margin: 10px 0;
-      text-align: center;
       width: 100%;
+      display: flex;
+      justify-content: center;
     }
 
     .header-row span {
       font-weight: bold;
-      display: inline-block;
       width: 200px;
       text-align: right;
       margin-right: 10px;
+    }
+
+    .header-row div {
+      flex: 1;
+      text-align: left;
     }
 
     table {
@@ -62,8 +67,8 @@
     th, td {
       border: 1px solid #ccc;
       padding: 12px;
-      text-align: left;
       vertical-align: top;
+      text-align: left;
     }
 
     th {
@@ -170,36 +175,46 @@
 
         const rowsHTML = timeOrder.map(slot => {
           const entries = teacherMap[teacher][slot] || [];
-          if (entries.length === 0) return `
-            <tr>
+          if (entries.length === 0) {
+            return `<tr>
               <td>${slot}</td>
-              <td colspan="4"></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
             </tr>`;
+          }
 
-          const rowBlocks = entries.map(entry => {
-            return `${entry.Class} | ${entry.Subject} | ${entry.Days} | ${entry.Room_No}`;
-          }).join("\n");
+          const classCell = entries.map(e => e.Class).join("\n");
+          const subjectCell = entries.map(e => e.Subject).join("\n");
+          const daysCell = entries.map(e => e.Days).join("\n");
+          const roomCell = entries.map(e => e.Room_No).join("\n");
 
-          return `
-            <tr>
-              <td>${slot}</td>
-              <td colspan="4" style="white-space: pre-line;">${rowBlocks}</td>
-            </tr>`;
+          return `<tr>
+            <td>${slot}</td>
+            <td style="white-space: pre-line;">${classCell}</td>
+            <td style="white-space: pre-line;">${subjectCell}</td>
+            <td style="white-space: pre-line;">${daysCell}</td>
+            <td style="white-space: pre-line;">${roomCell}</td>
+          </tr>`;
         }).join("");
 
         page.innerHTML = `
           <img src="Logo.jpg" alt="Logo" class="logo" />
           <h1>GCW KARNAL</h1>
-          <div class="header-row"><span>Teacher Name:</span> ${teacher}</div>
-          <div class="header-row"><span>Department:</span> ______________________</div>
-          <div class="header-row"><span>Arrival Time:</span> ______________________</div>
-          <div class="header-row"><span>Departure Time:</span> ______________________</div>
+          <div class="header-row"><span>Teacher Name:</span><div>${teacher}</div></div>
+          <div class="header-row"><span>Department:</span><div>______________________</div></div>
+          <div class="header-row"><span>Arrival Time:</span><div>______________________</div></div>
+          <div class="header-row"><span>Departure Time:</span><div>______________________</div></div>
 
           <table>
             <thead>
               <tr>
                 <th>Time Slot</th>
-                <th colspan="4">Class | Subject | Days | Room No</th>
+                <th>Class</th>
+                <th>Subject</th>
+                <th>Days</th>
+                <th>Room No</th>
               </tr>
             </thead>
             <tbody>
