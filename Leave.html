@@ -1,42 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Teachers on Leave Today</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       padding: 20px;
-      max-width: 700px;
+      max-width: 900px;
       margin: auto;
+      background-color: #f9f9f9;
     }
-    h1, h2 {
+
+    h1 {
       text-align: center;
+      font-size: 26px;
+      margin-bottom: 5px;
     }
-    ul {
-      padding-left: 20px;
+
+    h2 {
+      text-align: center;
+      font-size: 20px;
+      color: #333;
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
       font-size: 16px;
+      background-color: white;
     }
-    li {
-      margin-bottom: 8px;
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
     }
+
+    th {
+      background-color: #005580;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
     .no-leaves {
-      color: gray;
+      text-align: center;
       font-style: italic;
+      color: #777;
+      padding: 20px;
+      background-color: white;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+
+    .print-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background-color: #005580;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .print-btn:hover {
+      background-color: #003d5c;
     }
   </style>
 </head>
 <body>
   <h1>Govt. College for Women, KARNAL</h1>
   <h2 id="heading">Teachers on Leave for the Day</h2>
-  <ul id="leaveList">Loading...</ul>
+
+  <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+
+  <div id="leaveContainer">
+    <p>Loading...</p>
+  </div>
 
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pub?output=csv';
 
     const today = new Date();
     const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    const todayISO = today.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const todayISO = today.toISOString().slice(0, 10);
 
     document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
@@ -58,26 +112,23 @@
       .then(res => res.text())
       .then(csvText => {
         const data = parseCSV(csvText);
-        const list = document.getElementById('leaveList');
-        list.innerHTML = '';
-        let count = 0;
+        const container = document.getElementById('leaveContainer');
+        const todaysLeaves = data.filter(row => row.Date === todayISO);
 
-        data.forEach(row => {
-          if (row.Date === todayISO) {
-            const li = document.createElement('li');
-            li.textContent = `${row.Name} (${row.Department}) – ${row.Reason}`;
-            list.appendChild(li);
-            count++;
-          }
-        });
-
-        if (count === 0) {
-          list.innerHTML = '<li class="no-leaves">No teachers are on leave today.</li>';
+        if (todaysLeaves.length === 0) {
+          container.innerHTML = '<div class="no-leaves">No teachers are on leave today.</div>';
+        } else {
+          let html = '<table><tr><th>Name</th><th>Department</th><th>Reason</th></tr>';
+          todaysLeaves.forEach(row => {
+            html += `<tr><td>${row.Name}</td><td>${row.Department}</td><td>${row.Reason}</td></tr>`;
+          });
+          html += '</table>';
+          container.innerHTML = html;
         }
       })
       .catch(err => {
-        document.getElementById('leaveList').innerHTML = '<li class="no-leaves">Failed to load data.</li>';
-        console.error('Error loading CSV:', err);
+        console.error('CSV load error:', err);
+        document.getElementById('leaveContainer').innerHTML = '<div class="no-leaves">⚠️ Failed to load leave data.</div>';
       });
   </script>
 </body>
