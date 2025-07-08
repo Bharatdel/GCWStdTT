@@ -52,6 +52,13 @@
       color: white;
     }
 
+    tfoot td {
+      background-color: #eef;
+      font-weight: bold;
+      text-align: right;
+      color: #003355;
+    }
+
     tr:hover {
       background-color: #f1f1f1;
     }
@@ -149,16 +156,40 @@
         if (todaysLeaves.length === 0) {
           container.innerHTML = '<div class="no-leaves">No teachers are on leave today.</div>';
         } else {
-          let html = '<table><tr><th>S. No.</th><th>Name</th><th>Department</th><th>Reason</th></tr>';
+          let html = `
+            <table>
+              <thead>
+                <tr>
+                  <th>S. No.</th>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
           todaysLeaves.forEach((row, index) => {
-            html += `<tr>
-              <td>${index + 1}</td>
-              <td>${row.Name}</td>
-              <td>${row.Department}</td>
-              <td>${row.Reason}</td>
-            </tr>`;
+            html += `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${row.Name}</td>
+                <td>${row.Department}</td>
+                <td>${row.Reason}</td>
+              </tr>
+            `;
           });
-          html += '</table>';
+
+          html += `
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4">Total teachers on leave: ${todaysLeaves.length}</td>
+                </tr>
+              </tfoot>
+            </table>
+          `;
+
           container.innerHTML = html;
         }
       })
