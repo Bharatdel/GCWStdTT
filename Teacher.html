@@ -37,13 +37,14 @@
     th {
       background: #dceeff;
     }
-    input {
+    select {
       padding: 0.5rem;
       font-size: 1rem;
       width: 100%;
+      margin-bottom: 1rem;
     }
     button {
-      margin-top: 1rem;
+      margin-top: 0.5rem;
       padding: 0.6rem 1.2rem;
       font-size: 1rem;
       background: #007bff;
@@ -53,10 +54,11 @@
       cursor: pointer;
     }
     @media print {
-      button, input { display: none; }
+      button, select { display: none; }
       body { padding: 0; margin: 0; }
     }
   </style>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
@@ -64,7 +66,11 @@
   <div class="container">
     <h1>GCW KARNAL</h1>
     <h2>Teacher Weekly Timetable View</h2>
-    <input type="text" id="teacherInput" placeholder="Enter Teacher Name (e.g. Neha)" />
+
+    <select id="teacherDropdown">
+      <option value="">-- Select Teacher --</option>
+    </select>
+
     <button onclick="showSchedule()">Generate Timetable</button>
     <div id="output"></div>
   </div>
@@ -82,20 +88,43 @@
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
 
-    async function showSchedule() {
-      const name = document.getElementById("teacherInput").value.trim().toLowerCase();
-      if (!name) return alert("Enter teacher name.");
+    // Populate dropdown with teacher names
+    async function loadTeachers() {
       const snapshot = await db.ref("FlattenedTT").once("value");
       const rows = Object.values(snapshot.val() || {});
+      const teacherSet = new Set();
 
-      const filtered = rows.filter(r => (r.Teacher || "").trim().toLowerCase() === name);
+      rows.forEach(r => {
+        const teacher = (r.Teacher || "").trim();
+        if (teacher) teacherSet.add(teacher);
+      });
+
+      const dropdown = document.getElementById("teacherDropdown");
+      [...teacherSet].sort().forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        dropdown.appendChild(option);
+      });
+    }
+
+    async function showSchedule() {
+      const selectedTeacher = document.getElementById("teacherDropdown").value.trim();
+      if (!selectedTeacher) return alert("Please select a teacher.");
+
+      const snapshot = await db.ref("FlattenedTT").once("value");
+      const rows = Object.values(snapshot.val() || {});
+      const filtered = rows.filter(r => (r.Teacher || "").trim() === selectedTeacher);
+
       const map = {};
       for (let d of days) map[d] = {};
 
       filtered.forEach(entry => {
-        entry.Days?.split(/,|-/).forEach(day => {
+        (entry.Days || "").split(/,|-/).forEach(day => {
           const d = day.trim();
-          map[d][entry.Time_Slot] = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
+          if (days.includes(d)) {
+            map[d][entry.Time_Slot] = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
+          }
         });
       });
 
@@ -114,6 +143,9 @@
       html += '</table>';
       document.getElementById("output").innerHTML = html;
     }
+
+    // Load teacher list on page load
+    window.addEventListener("DOMContentLoaded", loadTeachers);
   </script>
 </body>
 </html>
