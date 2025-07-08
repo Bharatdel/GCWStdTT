@@ -7,65 +7,119 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 30px;
       color: #000;
+      margin: 0;
+      padding: 0;
     }
+
     .teacher-page {
       page-break-after: always;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 30px 40px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
     }
-    h1 {
-      text-align: center;
-      font-size: 32px;
-      font-weight: bold;
-    }
-    .header-row {
-      font-size: 18px;
-      margin: 8px 0;
-    }
-    .header-row span {
-      font-weight: bold;
-      display: inline-block;
-      width: 200px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      background-color: #f4f4f4;
-    }
+
     .logo {
       display: block;
       margin: 0 auto 10px auto;
       max-width: 120px;
     }
-    .no-print {
+
+    h1 {
       text-align: center;
-      margin-bottom: 20px;
+      font-size: 36px;
+      font-weight: bold;
+      margin: 10px 0;
     }
-    .no-print button {
-      padding: 10px 20px;
-      font-size: 16px;
+
+    .header-row {
+      font-size: 22px;
+      margin: 10px 0;
+      text-align: center;
+      width: 100%;
     }
+
+    .header-row span {
+      font-weight: bold;
+      display: inline-block;
+      width: 200px;
+      text-align: right;
+      margin-right: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      font-size: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    .signature-row {
+      margin-top: auto;
+      width: 100%;
+      text-align: right;
+      font-size: 18px;
+      margin-top: 60px;
+    }
+
+    .signature-row span {
+      display: inline-block;
+      margin-right: 50px;
+      text-align: center;
+    }
+
+    .page-break-visual {
+      width: 100%;
+      height: 2px;
+      background: #ccc;
+      margin: 20px 0;
+    }
+
     @media print {
-      .no-print { display: none; }
-      body { margin: 0; padding: 20px; }
+      .no-print {
+        display: none;
+      }
+      .page-break-visual {
+        display: none;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    }
+
+    .print-btn {
+      text-align: center;
+      margin: 20px;
+    }
+    .print-btn button {
+      font-size: 18px;
+      padding: 10px 20px;
     }
   </style>
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
 </head>
 <body>
-  <div class="no-print">
-    <button onclick="window.print()">Print All Timetables</button>
+  <div class="print-btn no-print">
+    <button onclick="window.print()">🖨️ Print All</button>
   </div>
+
   <div id="content"></div>
 
   <script>
@@ -81,7 +135,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const timeSlots = [
+    const timeOrder = [
       "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
     ];
 
@@ -107,23 +161,15 @@
         });
       });
 
-      const slotOrder = {
-        "9 to 10": 1,
-        "10 to 11": 2,
-        "11 to 12": 3,
-        "12 to 1": 4,
-        "1 to 2": 5,
-        "2 to 3": 6,
-        "3 to 4": 7
-      };
-
       const container = document.getElementById("content");
 
       Object.keys(teacherMap).sort().forEach(teacher => {
         const page = document.createElement("div");
         page.className = "teacher-page";
 
-        const sortedData = teacherMap[teacher].sort((a, b) => slotOrder[a.Time_Slot] - slotOrder[b.Time_Slot]);
+        const sortedRows = teacherMap[teacher].sort((a, b) =>
+          timeOrder.indexOf(a.Time_Slot) - timeOrder.indexOf(b.Time_Slot)
+        );
 
         page.innerHTML = `
           <img src="Logo.jpg" alt="Logo" class="logo" />
@@ -144,7 +190,7 @@
               </tr>
             </thead>
             <tbody>
-              ${sortedData.map(row => `
+              ${sortedRows.map(row => `
                 <tr>
                   <td>${row.Time_Slot}</td>
                   <td>${row.Class}</td>
@@ -155,9 +201,17 @@
               `).join('')}
             </tbody>
           </table>
+
+          <div class="signature-row">
+            <span>Signature of Teacher with Date</span>
+          </div>
         `;
 
         container.appendChild(page);
+
+        const visualBreak = document.createElement("div");
+        visualBreak.className = "page-break-visual no-print";
+        container.appendChild(visualBreak);
       });
     });
   </script>
