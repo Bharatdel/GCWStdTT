@@ -149,7 +149,7 @@
       Object.values(data).forEach(entry => {
         const teacher = entry["Teacher"]?.trim();
         const slot = entry["Time_Slot"]?.trim();
-        if (!teacher || !slot) return;
+        if (!teacher || teacher === "⚠ Missing Teacher" || !slot) return;
 
         if (!teacherMap[teacher]) teacherMap[teacher] = {};
         if (!teacherMap[teacher][slot]) teacherMap[teacher][slot] = [];
@@ -176,20 +176,14 @@
               <td colspan="4"></td>
             </tr>`;
 
-          const merged = {
-            Class: entries.map(e => e.Class).join("\n"),
-            Subject: entries.map(e => e.Subject).join("\n"),
-            Days: entries.map(e => e.Days).join("\n"),
-            Room_No: entries.map(e => e.Room_No).join("\n")
-          };
+          const rowBlocks = entries.map(entry => {
+            return `${entry.Class} | ${entry.Subject} | ${entry.Days} | ${entry.Room_No}`;
+          }).join("\n");
 
           return `
             <tr>
               <td>${slot}</td>
-              <td>${merged.Class}</td>
-              <td>${merged.Subject}</td>
-              <td>${merged.Days}</td>
-              <td>${merged.Room_No}</td>
+              <td colspan="4" style="white-space: pre-line;">${rowBlocks}</td>
             </tr>`;
         }).join("");
 
@@ -205,10 +199,7 @@
             <thead>
               <tr>
                 <th>Time Slot</th>
-                <th>Class</th>
-                <th>Subject</th>
-                <th>Days</th>
-                <th>Room No</th>
+                <th colspan="4">Class | Subject | Days | Room No</th>
               </tr>
             </thead>
             <tbody>
