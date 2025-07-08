@@ -104,15 +104,20 @@
 
     document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
-    // Fetch sheet last updated time
+ 
+  document.addEventListener('DOMContentLoaded', () => {
+    const sheetMetaUrl = 'https://script.google.com/macros/s/AKfycbyFQ1lST8i26j5_qQI8UXSVTNzjnhDwXoo2-5XFnTk/dev';
+
     fetch(sheetMetaUrl)
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById('lastUpdated').textContent = `Last updated: ${data.lastUpdated}`;
-  })
-  .catch(() => {
-    document.getElementById('lastUpdated').textContent = 'Last updated: unavailable';
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('lastUpdated').textContent = `Last updated: ${data.lastUpdated}`;
+      })
+      .catch(() => {
+        document.getElementById('lastUpdated').textContent = 'Last updated: unavailable';
+      });
   });
+
 
 
     function parseCSV(csv) {
