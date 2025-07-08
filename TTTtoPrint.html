@@ -116,14 +116,7 @@
 
     @media print {
       .no-print {
-        display: none;
-      }
-      .page-break-visual {
-        display: none;
-      }
-      body {
-        margin: 0;
-        padding: 0;
+        display: none !important;
       }
     }
 
@@ -134,14 +127,34 @@
     .print-btn button {
       font-size: 18px;
       padding: 10px 20px;
+      margin: 5px;
+    }
+
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    select {
+      font-size: 18px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
     }
   </style>
+
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
 </head>
 <body>
-  <div class="print-btn no-print">
-    <button onclick="window.print()">🖨️ Print All</button>
+  <div class="controls no-print">
+    <select id="teacherDropdown">
+      <option value="">-- Select Teacher --</option>
+    </select>
+    <br />
+    <button onclick="generateSingleTeacher()">🔍 Generate Timetable</button>
+    <button onclick="window.print()">🖨️ Print This Teacher</button>
+    <button onclick="alert('Export PDF functionality coming soon')">📄 Export PDF</button>
+    <button onclick="renderAllTeachers()">🖨️ Print All Teachers</button>
   </div>
 
   <div id="content"></div>
@@ -163,11 +176,11 @@
       "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
     ];
 
+    let teacherMap = {};
+
     db.ref("FlattenedTT").once("value").then(snapshot => {
       const data = snapshot.val();
       if (!data) return alert("No data found.");
-
-      const teacherMap = {};
 
       Object.values(data).forEach(entry => {
         const teacher = entry["Teacher"]?.trim();
@@ -184,70 +197,88 @@
         });
       });
 
-      const container = document.getElementById("content");
-
-      Object.keys(teacherMap).sort().forEach(teacher => {
-        const page = document.createElement("div");
-        page.className = "teacher-page";
-
-        const rowsHTML = timeOrder.map(slot => {
-          const entries = teacherMap[teacher][slot] || [];
-          if (entries.length === 0) {
-            return `<tr>
-              <td>${slot}</td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>`;
-          }
-
-          const classCell = entries.map(e => e.Class).join("\n");
-          const daysCell = entries.map(e => e.Days).join("\n");
-          const roomCell = entries.map(e => e.Room_No).join("\n");
-
-          return `<tr>
-            <td>${slot}</td>
-            <td style="white-space: pre-line;">${classCell}</td>
-            <td style="white-space: pre-line;">${daysCell}</td>
-            <td style="white-space: pre-line;">${roomCell}</td>
-          </tr>`;
-        }).join("");
-
-        page.innerHTML = `
-          
-          <h1>Govt. College for Women, KARNAL</h1>
-          <h2>Teacher-Wise Time Table for the Session 2025-26</h2>
-          <div class="header-row"><span>Teacher Name: Dr.</span><div>${teacher}</div></div>
-          <div class="header-row"><span>Department:</span><div>______________________</div></div>
-          <div class="header-row"><span>Arrival Time:</span><div>______________________</div></div>
-          <div class="header-row"><span>Departure Time:</span><div>______________________</div></div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Time Slot</th>
-                <th>Class</th>
-                <th>Days</th>
-                <th>Room No</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHTML}
-            </tbody>
-          </table>
-
-          <div class="signature-row">
-            <span>Signature of Teacher with Date</span>
-          </div>
-        `;
-
-        container.appendChild(page);
-
-        const visualBreak = document.createElement("div");
-        visualBreak.className = "page-break-visual no-print";
-        container.appendChild(visualBreak);
+      const dropdown = document.getElementById("teacherDropdown");
+      Object.keys(teacherMap).sort().forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        dropdown.appendChild(option);
       });
     });
+
+    function generateTeacherPage(teacher) {
+      const slotMap = teacherMap[teacher] || {};
+      const page = document.createElement("div");
+      page.className = "teacher-page";
+
+      const rowsHTML = timeOrder.map(slot => {
+        const entries = slotMap[slot] || [];
+        if (entries.length === 0) {
+          return `<tr>
+            <td>${slot}</td><td></td><td></td><td></td>
+          </tr>`;
+        }
+
+        const classCell = entries.map(e => e.Class).join("\n");
+        const daysCell = entries.map(e => e.Days).join("\n");
+        const roomCell = entries.map(e => e.Room_No).join("\n");
+
+        return `<tr>
+          <td>${slot}</td>
+          <td style="white-space: pre-line;">${classCell}</td>
+          <td style="white-space: pre-line;">${daysCell}</td>
+          <td style="white-space: pre-line;">${roomCell}</td>
+        </tr>`;
+      }).join("");
+
+      page.innerHTML = `
+        <h1>Govt. College for Women, KARNAL</h1>
+        <h2>Teacher-Wise Time Table for the Session 2025-26 (Odd Semester)</h2>
+        <div class="header-row"><span>Teacher Name:</span><div>Dr. ${teacher}</div></div>
+        <div class="header-row"><span>Department:</span><div>______________________</div></div>
+        <div class="header-row"><span>Arrival Time:</span><div>______________________</div></div>
+        <div class="header-row"><span>Departure Time:</span><div>______________________</div></div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Time Slot</th>
+              <th>Class</th>
+              <th>Days</th>
+              <th>Room No</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHTML}
+          </tbody>
+        </table>
+
+        <div class="signature-row">
+          <span>Signature of Teacher with Date</span>
+        </div>
+        <div style="font-size: 14px; margin-top: 20px;">Printed as on: ${new Date().toLocaleString()}</div>
+      `;
+      return page;
+    }
+
+    function generateSingleTeacher() {
+      const teacher = document.getElementById("teacherDropdown").value;
+      if (!teacher) return alert("Please select a teacher.");
+      const content = document.getElementById("content");
+      content.innerHTML = "";
+      content.appendChild(generateTeacherPage(teacher));
+    }
+
+    function renderAllTeachers() {
+      const content = document.getElementById("content");
+      content.innerHTML = "";
+      Object.keys(teacherMap).sort().forEach(teacher => {
+        content.appendChild(generateTeacherPage(teacher));
+        const spacer = document.createElement("div");
+        spacer.className = "page-break-visual no-print";
+        content.appendChild(spacer);
+      });
+    }
   </script>
 </body>
 </html>
