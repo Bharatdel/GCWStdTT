@@ -25,6 +25,14 @@
       margin-top: 0;
     }
 
+    #lastUpdated {
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      margin-top: -5px;
+      margin-bottom: 10px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -78,6 +86,7 @@
 <body>
   <h1>Govt. College for Women, KARNAL</h1>
   <h2 id="heading">Teachers on Leave for the Day</h2>
+  <div id="lastUpdated">Last updated: fetching…</div>
 
   <button class="print-btn" onclick="window.print()">🖨️ Print</button>
 
@@ -87,12 +96,28 @@
 
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pub?output=csv';
+    const sheetMetaUrl = 'https://spreadsheets.google.com/feeds/worksheets/1D-9UCN_xlgCGu_3vVVt01AECmI2wfdwv1fOgs3-w6aE/public/basic?alt=json';
 
     const today = new Date();
     const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const todayISO = today.toISOString().slice(0, 10);
 
     document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
+
+    // Fetch sheet last updated time
+    fetch(sheetMetaUrl)
+      .then(res => res.json())
+      .then(json => {
+        const updated = json.feed.updated['$t'];
+        const lastUpdated = new Date(updated).toLocaleString('en-GB', {
+          day: 'numeric', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdated}`;
+      })
+      .catch(() => {
+        document.getElementById('lastUpdated').textContent = 'Last updated: unavailable';
+      });
 
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
@@ -118,9 +143,14 @@
         if (todaysLeaves.length === 0) {
           container.innerHTML = '<div class="no-leaves">No teachers are on leave today.</div>';
         } else {
-          let html = '<table><tr><th>Name</th><th>Department</th><th>Reason</th></tr>';
-          todaysLeaves.forEach(row => {
-            html += `<tr><td>${row.Name}</td><td>${row.Department}</td><td>${row.Reason}</td></tr>`;
+          let html = '<table><tr><th>S. No.</th><th>Name</th><th>Department</th><th>Reason</th></tr>';
+          todaysLeaves.forEach((row, index) => {
+            html += `<tr>
+              <td>${index + 1}</td>
+              <td>${row.Name}</td>
+              <td>${row.Department}</td>
+              <td>${row.Reason}</td>
+            </tr>`;
           });
           html += '</table>';
           container.innerHTML = html;
