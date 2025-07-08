@@ -145,23 +145,40 @@
     return data;
   }
 
-  function getLastUpdatedFromCSV(data) {
-    const timestamps = data
-      .map(row => row.LastUpdated)
-      .filter(val => val && val.trim())
-      .map(val => {
-        const cleaned = val.replace(/[\r\n]+/g, ' ').trim(); // remove line breaks
-        const match = cleaned.match(/\d{2} \w{3} \d{4}, \d{2}:\d{2} (AM|PM)/);
-        return match ? match[0] : null;
-      })
-      .filter(Boolean);
+ function getLastUpdatedFromCSV(data) {
+  const timestamps = data
+    .map(row => row.LastUpdated)
+    .filter(val => val && val.trim())
+    .map(val => {
+      const cleaned = val.replace(/[\r\n]+/g, ' ').trim();
+      const match = cleaned.match(/\d{2} \w{3} \d{4}, \d{2}:\d{2} (AM|PM)/);
+      return match ? match[0] : null;
+    })
+    .filter(Boolean);
 
-    if (timestamps.length === 0) return "unavailable";
+  if (timestamps.length === 0) return "unavailable";
 
-    timestamps.sort((a, b) => new Date('01 ' + b) - new Date('01 ' + a)); // fake "day" for Date parsing
+  // Get most recent timestamp
+  timestamps.sort((a, b) => new Date('01 ' + b) - new Date('01 ' + a));
+  const latest = timestamps[0];
 
-    return timestamps[0];
-  }
+  // Convert string like "08 Jul 2025, 01:55 PM" to Date object
+  const parsed = new Date(Date.parse(latest));
+
+  // If parsing failed, return raw string
+  if (isNaN(parsed)) return latest;
+
+  return parsed.toLocaleString('en-GB', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
 
   fetch(csvUrl)
     .then(res => res.text())
