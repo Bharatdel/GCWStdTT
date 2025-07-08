@@ -105,14 +105,18 @@
     document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
     // Fetch last updated time
-    fetch(sheetMetaUrl)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('lastUpdated').textContent = `Last updated: ${data.lastUpdated}`;
-      })
-      .catch(() => {
-        document.getElementById('lastUpdated').textContent = 'Last updated: unavailable';
-      });
+    // New way: get from CSV itself
+function getLastUpdatedFromCSV(data) {
+  const nonEmptyRows = data.filter(row => row.LastUpdated);
+  if (nonEmptyRows.length === 0) return "unavailable";
+
+  // Return the most recent timestamp
+  const sorted = nonEmptyRows.sort((a, b) => new Date(b.LastUpdated) - new Date(a.LastUpdated));
+  const latest = new Date(sorted[0].LastUpdated);
+
+  return latest.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 
     // Parse CSV and display leave data
     function parseCSV(csv) {
@@ -128,6 +132,9 @@
       });
       return data;
     }
+const data = parseCSV(csvText);
+const lastUpdatedText = getLastUpdatedFromCSV(data);
+document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
 
     fetch(csvUrl)
       .then(res => res.text())
