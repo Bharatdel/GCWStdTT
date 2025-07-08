@@ -161,7 +161,6 @@
 
         teacherMap[teacher][slot].push({
           Class: entry["Class"] || "",
-          Subject: entry["Subject"] || "",
           Days: entry["Days"] || "",
           Room_No: entry["Room_No"] || ""
         });
@@ -181,19 +180,16 @@
               <td></td>
               <td></td>
               <td></td>
-              <td></td>
             </tr>`;
           }
 
           const classCell = entries.map(e => e.Class).join("\n");
-          const subjectCell = entries.map(e => e.Subject).join("\n");
           const daysCell = entries.map(e => e.Days).join("\n");
           const roomCell = entries.map(e => e.Room_No).join("\n");
 
           return `<tr>
             <td>${slot}</td>
             <td style="white-space: pre-line;">${classCell}</td>
-            <td style="white-space: pre-line;">${subjectCell}</td>
             <td style="white-space: pre-line;">${daysCell}</td>
             <td style="white-space: pre-line;">${roomCell}</td>
           </tr>`;
@@ -202,18 +198,17 @@
         page.innerHTML = `
           
           <h1>Govt. College for Women, KARNAL</h1>
-          <h3> Teacher-Wise Time Table </h3>
+          <h2> Teacher-Wise Time Table</h2>
           <div class="header-row"><span>Teacher Name:</span><div>${teacher}</div></div>
           <div class="header-row"><span>Department:</span><div>______________________</div></div>
-          <div class="header-row"><span>Daily Arrival Time:</span><div>______________________</div></div>
-          <div class="header-row"><span>Daily Departure Time:</span><div>______________________</div></div>
+          <div class="header-row"><span>Arrival Time:</span><div>______________________</div></div>
+          <div class="header-row"><span>Departure Time:</span><div>______________________</div></div>
 
           <table>
             <thead>
               <tr>
                 <th>Time Slot</th>
                 <th>Class</th>
-                <th>Subject</th>
                 <th>Days</th>
                 <th>Room No</th>
               </tr>
