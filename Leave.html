@@ -145,30 +145,29 @@
     return data;
   }
 
- function getLastUpdatedFromCSV(data) {
+function getLastUpdatedFromCSV(data) {
   const timestamps = data
-    .map(row => row.LastUpdated)
-    .filter(val => val && val.trim())
-    .map(val => {
-      const cleaned = val.replace(/[\r\n]+/g, ' ').trim();
-      const match = cleaned.match(/\d{2} \w{3} \d{4}, \d{2}:\d{2} (AM|PM)/);
-      return match ? match[0] : null;
-    })
-    .filter(Boolean);
+    .map(row => row.LastUpdated?.trim())
+    .filter(val => val && val.length > 10); // ensure it's not empty or "undefined"
 
   if (timestamps.length === 0) return "unavailable";
 
-  // Get most recent timestamp
-  timestamps.sort((a, b) => new Date('01 ' + b) - new Date('01 ' + a));
-  const latest = timestamps[0];
+  // Convert string like "08 Jul 2025, 01:55 PM" to Date object (adding "01" before to fix parse)
+  const dateObjects = timestamps.map(str => {
+    const parts = str.split(',');
+    if (parts.length < 2) return null;
+    const [datePart, timePart] = parts.map(s => s.trim());
+    const fullStr = `${datePart} ${timePart}`;
+    const parsed = new Date(Date.parse(fullStr));
+    return isNaN(parsed) ? null : parsed;
+  }).filter(Boolean);
 
-  // Convert string like "08 Jul 2025, 01:55 PM" to Date object
-  const parsed = new Date(Date.parse(latest));
+  if (dateObjects.length === 0) return "unavailable";
 
-  // If parsing failed, return raw string
-  if (isNaN(parsed)) return latest;
+  // Find latest
+  const latest = new Date(Math.max(...dateObjects));
 
-  return parsed.toLocaleString('en-GB', {
+  return latest.toLocaleString('en-GB', {
     weekday: 'long',
     day: '2-digit',
     month: 'short',
@@ -184,6 +183,7 @@
     .then(res => res.text())
     .then(csvText => {
       const data = parseCSV(csvText);
+      console.log("Parsed CSV Data:", data);
 
       const lastUpdatedText = getLastUpdatedFromCSV(data);
       document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
