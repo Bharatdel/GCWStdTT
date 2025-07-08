@@ -177,22 +177,27 @@
     let fullData = {};
 
     function populateRoomDropdown() {
-      const roomSet = new Set();
-      Object.values(fullData).forEach(entry => {
-        if (entry["Room_No"]) {
-          roomSet.add(entry["Room_No"].trim());
-        }
-      });
-
-      const roomSelect = document.getElementById("roomSelect");
-      roomSelect.innerHTML = '<option value="">Select Room</option>';
-      [...roomSet].sort().forEach(room => {
-        const option = document.createElement("option");
-        option.value = room;
-        option.textContent = room;
-        roomSelect.appendChild(option);
-      });
+  const roomSet = new Set();
+  Object.values(fullData).forEach(entry => {
+    if (entry["Room_No"]) {
+      roomSet.add(entry["Room_No"].trim());
     }
+  });
+
+  const roomSelect = document.getElementById("roomSelect");
+  roomSelect.innerHTML = '<option value="">Select Room</option>';
+
+  // Natural sort for room numbers (e.g. R-2 < R-10)
+  const naturalSort = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+
+  [...roomSet].sort(naturalSort).forEach(room => {
+    const option = document.createElement("option");
+    option.value = room;
+    option.textContent = room;
+    roomSelect.appendChild(option);
+  });
+}
+
 
     function generateTable() {
       const room = document.getElementById("roomSelect").value;
