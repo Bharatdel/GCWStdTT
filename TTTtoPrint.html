@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teacher Timetable Overview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      color: #000;
+    }
+    .teacher-page {
+      page-break-after: always;
+    }
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .header-row {
+      font-size: 18px;
+      margin: 8px 0;
+    }
+    .header-row span {
+      font-weight: bold;
+      display: inline-block;
+      width: 200px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    .logo {
+      display: block;
+      margin: 0 auto 10px auto;
+      max-width: 120px;
+    }
+    .no-print {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .no-print button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    @media print {
+      .no-print { display: none; }
+      body { margin: 0; padding: 20px; }
+    }
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="no-print">
+    <button onclick="window.print()">Print All Timetables</button>
+  </div>
+  <div id="content"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+      authDomain: "gcw-timetable.firebaseapp.com",
+      databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "gcw-timetable",
+      storageBucket: "gcw-timetable.appspot.com",
+      messagingSenderId: "654415403426",
+      appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const timeSlots = [
+      "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
+    ];
+
+    db.ref("FlattenedTT").once("value").then(snapshot => {
+      const data = snapshot.val();
+      if (!data) return alert("No data found.");
+
+      const teacherMap = {};
+
+      Object.values(data).forEach(entry => {
+        const teacher = entry["Teacher"]?.trim();
+        const slot = entry["Time_Slot"]?.trim();
+        if (!teacher || !slot) return;
+
+        if (!teacherMap[teacher]) teacherMap[teacher] = [];
+
+        teacherMap[teacher].push({
+          Time_Slot: slot,
+          Class: entry["Class"] || "",
+          Subject: entry["Subject"] || "",
+          Days: entry["Days"] || "",
+          Room_No: entry["Room_No"] || ""
+        });
+      });
+
+      const slotOrder = {
+        "9 to 10": 1,
+        "10 to 11": 2,
+        "11 to 12": 3,
+        "12 to 1": 4,
+        "1 to 2": 5,
+        "2 to 3": 6,
+        "3 to 4": 7
+      };
+
+      const container = document.getElementById("content");
+
+      Object.keys(teacherMap).sort().forEach(teacher => {
+        const page = document.createElement("div");
+        page.className = "teacher-page";
+
+        const sortedData = teacherMap[teacher].sort((a, b) => slotOrder[a.Time_Slot] - slotOrder[b.Time_Slot]);
+
+        page.innerHTML = `
+          <img src="Logo.jpg" alt="Logo" class="logo" />
+          <h1>GCW KARNAL</h1>
+          <div class="header-row"><span>Teacher Name:</span> ${teacher}</div>
+          <div class="header-row"><span>Department:</span> ______________________</div>
+          <div class="header-row"><span>Arrival Time:</span> ______________________</div>
+          <div class="header-row"><span>Departure Time:</span> ______________________</div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Time Slot</th>
+                <th>Class</th>
+                <th>Subject</th>
+                <th>Days</th>
+                <th>Room No</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedData.map(row => `
+                <tr>
+                  <td>${row.Time_Slot}</td>
+                  <td>${row.Class}</td>
+                  <td>${row.Subject}</td>
+                  <td>${row.Days}</td>
+                  <td>${row.Room_No}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+        container.appendChild(page);
+      });
+    });
+  </script>
+</body>
+</html>
