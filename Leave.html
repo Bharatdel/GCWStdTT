@@ -122,7 +122,7 @@
     <p>Loading...</p>
   </div>
 
- <script>
+<script>
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pub?output=csv';
 
   const today = new Date();
@@ -148,31 +148,19 @@
   function getLastUpdatedFromCSV(data) {
     const timestamps = data
       .map(row => row.LastUpdated?.trim())
-      .filter(val => val && val.length > 10);
+      .filter(val => val && val.length > 5);
 
     if (timestamps.length === 0) return "unavailable";
 
-    // Convert all timestamps to Date objects
     const parsedDates = timestamps.map(str => {
-      try {
-        // Example: "Wednesday, July 9, 2025 at 2:00 AM"
-        const cleaned = str
-          .replace(/^[A-Za-z]+,\s*/, '')         // Remove weekday
-          .replace('at ', '')                    // Remove 'at'
-          .replace(/\u202F/g, ' ')               // Replace narrow non-breaking space with normal space
-          .trim();
-
-        // Format is now: "July 9, 2025 2:00 AM"
-        const d = new Date(cleaned);
-        return isNaN(d.getTime()) ? null : d;
-      } catch {
-        return null;
-      }
+      const d = new Date(str); // Now valid format like "7/9/2025 2:00:25"
+      return isNaN(d.getTime()) ? null : d;
     }).filter(Boolean);
 
     if (parsedDates.length === 0) return "unavailable";
 
     const latest = new Date(Math.max(...parsedDates));
+
     return latest.toLocaleString('en-GB', {
       weekday: 'long',
       day: '2-digit',
@@ -240,6 +228,7 @@
       document.getElementById('leaveContainer').innerHTML = '<div class="no-leaves">⚠️ Failed to load leave data.</div>';
     });
 </script>
+
 
 </body>
 </html>
