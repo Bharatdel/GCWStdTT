@@ -148,24 +148,25 @@
 function getLastUpdatedFromCSV(data) {
   const timestamps = data
     .map(row => row.LastUpdated?.trim())
-    .filter(val => val && val.length > 10); // ensure it's not empty or "undefined"
+    .filter(val => val && val.length > 10);
 
   if (timestamps.length === 0) return "unavailable";
 
-  // Convert string like "08 Jul 2025, 01:55 PM" to Date object (adding "01" before to fix parse)
-  const dateObjects = timestamps.map(str => {
-    const parts = str.split(',');
-    if (parts.length < 2) return null;
-    const [datePart, timePart] = parts.map(s => s.trim());
-    const fullStr = `${datePart} ${timePart}`;
-    const parsed = new Date(Date.parse(fullStr));
+  const cleanedDates = timestamps.map(str => {
+    // Remove "Wednesday, " and "at ", and replace non-breaking space with regular space
+    const cleaned = str
+      .replace(/^[A-Za-z]+,\s*/, '')             // remove day name and comma
+      .replace('at ', '')                        // remove 'at '
+      .replace(/\u202F/g, ' ')                   // replace non-breaking space (U+202F) with normal space
+      .trim();
+
+    const parsed = new Date(cleaned);
     return isNaN(parsed) ? null : parsed;
   }).filter(Boolean);
 
-  if (dateObjects.length === 0) return "unavailable";
+  if (cleanedDates.length === 0) return "unavailable";
 
-  // Find latest
-  const latest = new Date(Math.max(...dateObjects));
+  const latest = new Date(Math.max(...cleanedDates));
 
   return latest.toLocaleString('en-GB', {
     weekday: 'long',
@@ -174,9 +175,10 @@ function getLastUpdatedFromCSV(data) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
+    hour12: true
   });
 }
+
 
 
   fetch(csvUrl)
