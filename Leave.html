@@ -148,30 +148,15 @@
    function getLastUpdatedFromCSV(data) {
   const timestamps = data
     .map(row => row.LastUpdated)
-    .filter(val => val)
-    .map(val => val.replace(/\r?\n|\r/g, '').trim());  // Remove line breaks
+    .filter(val => val && val.trim())
+    .map(val => val.replace(/[\r\n]+/g, ' ').trim()); // Replace newlines with space
 
   if (timestamps.length === 0) return "unavailable";
 
-  const latest = timestamps.sort().reverse()[0];  // Assuming they're already preformatted
+  // Use the latest by sorting, assuming formatted as "08 Jul 2025, 01:55 PM"
+  timestamps.sort((a, b) => new Date(b) - new Date(a));
 
-  return latest;
-}
-
-
-
-function parseCustomDate(dateStr) {
-  // Assumes format like "08-Jul-2025 13:48"
-  const parts = dateStr.match(/(\d{2})-(\w{3})-(\d{4}) (\d{2}):(\d{2})/);
-  if (!parts) return NaN;
-
-  const [_, day, monStr, year, hour, minute] = parts;
-  const monthMap = {
-    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
-  };
-  const month = monthMap[monStr];
-  return new Date(year, month, day, hour, minute);
+  return timestamps[0];
 }
 
 
