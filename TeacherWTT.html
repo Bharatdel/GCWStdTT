@@ -42,6 +42,21 @@
     button:hover {
       background-color: #0056b3;
     }
+    footer#printFooter {
+  display: none;
+  position: fixed;
+  bottom: 1cm;
+  left: 2cm;
+  font-size: 12px;
+  color: #555;
+}
+
+@media print {
+  footer#printFooter {
+    display: block;
+  }
+}
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -88,6 +103,7 @@
 
     <div id="output"></div>
   </div>
+<footer id="printFooter">Printed on: <span id="printDate"></span></footer>
 
   <script>
     const config = {
@@ -115,38 +131,50 @@
       });
     });
 
-    async function generateSchedule() {
-      const name = document.getElementById("teacherDropdown").value.trim().toLowerCase();
-      if (!name) return alert("Please select a teacher.");
+async  function generateSchedule() {
+    const teacher = document.getElementById("teacherDropdown").value;
+    if (!teacher) return alert("Please select a teacher.");
 
-      const snapshot = await db.ref("FlattenedTT").once("value");
+    const name = teacher.trim().toLowerCase();
+    document.getElementById("output").innerHTML = ""; // reset
+
+    db.ref("FlattenedTT").once("value").then(snapshot => {
       const rows = Object.values(snapshot.val() || {});
       const filtered = rows.filter(r => (r.Teacher || "").trim().toLowerCase() === name);
       const map = {};
       for (let d of days) map[d] = {};
 
       filtered.forEach(entry => {
-        entry.Days?.split(/,|-/).forEach(day => {
+        (entry.Days || "").split(/,|-/).forEach(day => {
           const d = day.trim();
+          if (!map[d]) map[d] = {};
           map[d][entry.Time_Slot] = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
         });
       });
 
-      let html = `<table><tr><th>Day / Time</th>`;
-      timeSlots.forEach(s => html += `<th>${s}</th>`);
+      let html = `
+        <div style="text-align:center;">
+          <h2>Govt. College for Women, KARNAL</h2>
+          <h3>Dr. ${teacher}</h3>
+          <h3>Teacher’s Weekly Timetable for the Session 2025–26 (Odd Semester)</h3>
+        </div>
+        <table><tr><th>Day / Time</th>`;
+
+      timeSlots.forEach(slot => html += `<th>${slot}</th>`);
       html += '</tr>';
 
-      days.forEach(d => {
-        html += `<tr><th>${d}</th>`;
-        timeSlots.forEach(s => {
-          html += `<td>${map[d][s] || ''}</td>`;
+      days.forEach(day => {
+        html += `<tr><th>${day}</th>`;
+        timeSlots.forEach(slot => {
+          html += `<td>${map[day][slot] || ''}</td>`;
         });
         html += '</tr>';
       });
 
       html += '</table>';
       document.getElementById("output").innerHTML = html;
-    }
+    });
+  }
 
     function printThisSchedule() {
       const content = document.getElementById("output").innerHTML;
@@ -246,6 +274,23 @@
       printWindow.focus();
       printWindow.print();
     }
+
+
+  function updatePrintFooter() {
+    const now = new Date();
+    const formatted = now.toLocaleString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    document.getElementById("printDate").textContent = formatted;
+  }
+
+  // Run when DOM is ready
+  document.addEventListener("DOMContentLoaded", updatePrintFooter);
+
+  // Update before printing
+  window.addEventListener("beforeprint", updatePrintFooter);
+
   </script>
 </body>
 </html>
