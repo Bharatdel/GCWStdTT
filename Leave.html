@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teachers on Leave Today</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+    h2 {
+      color: #333;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Teachers on Leave Today</h2>
+  <ul id="leaveList">Loading...</ul>
+
+  <script>
+    const sheetID = '1D-9UCN_xlgCGu_3vVVt01AECmI2wfdwv1fOgs3-w6aE';
+    const url = `https://spreadsheets.google.com/feeds/list/${sheetID}/1/public/values?alt=json`;
+    const today = new Date().toISOString().slice(0, 10);
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        const entries = data.feed.entry;
+        const list = document.getElementById('leaveList');
+        list.innerHTML = '';
+        let count = 0;
+
+        entries.forEach(entry => {
+          const name = entry.gsx$name.$t;
+          const dept = entry.gsx$department.$t;
+          const date = entry.gsx$date.$t;
+          const reason = entry.gsx$reason.$t;
+
+          if (date === today) {
+            const li = document.createElement('li');
+            li.textContent = `${name} (${dept}) – ${reason}`;
+            list.appendChild(li);
+            count++;
+          }
+        });
+
+        if (count === 0) {
+          list.innerHTML = '<li>No teachers are on leave today.</li>';
+        }
+      })
+      .catch(err => {
+        document.getElementById('leaveList').innerHTML = 'Failed to load data.';
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
