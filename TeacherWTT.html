@@ -37,24 +37,20 @@
     th {
       background: #dceeff;
     }
-    select {
+    select, button {
       padding: 0.5rem;
       font-size: 1rem;
-      width: 100%;
-      margin-bottom: 1rem;
+      margin: 0.5rem 0;
     }
-    button {
-      margin-top: 0.5rem;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+    .button-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
     @media print {
-      button, select { display: none; }
+      @page { size: landscape; }
+      select, .button-row, h1, h2 { display: none; }
       body { padding: 0; margin: 0; }
     }
   </style>
@@ -71,7 +67,12 @@
       <option value="">-- Select Teacher --</option>
     </select>
 
-    <button onclick="showSchedule()">Generate Timetable</button>
+    <div class="button-row">
+      <button onclick="showSchedule()">Generate Timetable</button>
+      <button onclick="window.print()">Print Current</button>
+      <button onclick="printAllSchedules()">Print All</button>
+    </div>
+
     <div id="output"></div>
   </div>
 
@@ -88,7 +89,6 @@
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
 
-    // Populate dropdown with teacher names
     async function loadTeachers() {
       const snapshot = await db.ref("FlattenedTT").once("value");
       const rows = Object.values(snapshot.val() || {});
@@ -116,10 +116,14 @@
       const rows = Object.values(snapshot.val() || {});
       const filtered = rows.filter(r => (r.Teacher || "").trim() === selectedTeacher);
 
+      document.getElementById("output").innerHTML = generateScheduleHTML(filtered, selectedTeacher);
+    }
+
+    function generateScheduleHTML(entries, teacherName = '') {
       const map = {};
       for (let d of days) map[d] = {};
 
-      filtered.forEach(entry => {
+      entries.forEach(entry => {
         (entry.Days || "").split(/,|-/).forEach(day => {
           const d = day.trim();
           if (days.includes(d)) {
@@ -128,7 +132,8 @@
         });
       });
 
-      let html = `<button onclick="window.print()">Print</button><table><tr><th>Day / Time</th>`;
+      let html = `<h3>${teacherName ? 'Timetable for: ' + teacherName : ''}</h3>`;
+      html += `<table><tr><th>Day / Time</th>`;
       timeSlots.forEach(s => html += `<th>${s}</th>`);
       html += '</tr>';
 
@@ -140,11 +145,50 @@
         html += '</tr>';
       });
 
-      html += '</table>';
-      document.getElementById("output").innerHTML = html;
+      html += '</table><br/>';
+      return html;
     }
 
-    // Load teacher list on page load
+    async function printAllSchedules() {
+      const snapshot = await db.ref("FlattenedTT").once("value");
+      const rows = Object.values(snapshot.val() || {});
+      const teacherMap = {};
+
+      rows.forEach(r => {
+        const teacher = (r.Teacher || "").trim();
+        if (!teacher) return;
+        if (!teacherMap[teacher]) teacherMap[teacher] = [];
+        teacherMap[teacher].push(r);
+      });
+
+      let html = '';
+      Object.keys(teacherMap).sort().forEach(name => {
+        html += generateScheduleHTML(teacherMap[name], name);
+      });
+
+      const printWindow = window.open('', '', 'width=1200,height=800');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>All Teacher Schedules</title>
+          <style>
+            body { font-family: Arial; padding: 1rem; }
+            h3 { text-align: center; margin-top: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; table-layout: fixed; }
+            th, td { border: 1px solid #aaa; padding: 8px; text-align: center; font-size: 13px; word-wrap: break-word; }
+            th { background-color: #dceeff; }
+            @media print { @page { size: landscape; } }
+          </style>
+        </head>
+        <body>
+          ${html}
+          <script>window.onload = function() { window.print(); }</script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
     window.addEventListener("DOMContentLoaded", loadTeachers);
   </script>
 </body>
