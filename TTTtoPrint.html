@@ -144,6 +144,9 @@
 
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 </head>
 <body>
   <div class="controls no-print">
@@ -153,7 +156,7 @@
     <br />
     <button onclick="generateSingleTeacher()">🔍 Generate Timetable</button>
     <button onclick="window.print()">🖨️ Print This Teacher</button>
-    <button onclick="alert('Export PDF functionality coming soon')">📄 Export PDF</button>
+    <button onclick="exportToPDF()">📄 Export PDF</button>
     <button onclick="renderAllTeachers()">🖨️ Print All Teachers</button>
   </div>
 
@@ -233,7 +236,7 @@
 
       page.innerHTML = `
         <h1>Govt. College for Women, KARNAL</h1>
-        <h2>Teacher-Wise Time Table for the Session 2025-26 (Odd Semester)</h2>
+        <h3>Teacher-Wise Time Table for the Session 2025-26 (Odd Semester)</h3>
         <div class="header-row"><span>Teacher Name:</span><div>Dr. ${teacher}</div></div>
         <div class="header-row"><span>Department:</span><div>______________________</div></div>
         <div class="header-row"><span>Arrival Time:</span><div>______________________</div></div>
@@ -260,6 +263,25 @@
       `;
       return page;
     }
+async function exportToPDF() {
+  const teacher = document.getElementById("teacherDropdown").value;
+  if (!teacher) return alert("Please select a teacher first.");
+
+  const content = document.querySelector(".teacher-page");
+  if (!content) return alert("No timetable found to export.");
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('landscape', 'mm', 'a4');
+
+  const canvas = await html2canvas(content, { scale: 2 });
+  const imgData = canvas.toDataURL('image/jpeg', 1.0);
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+  const filename = `Dr_${teacher.replace(/\s+/g, '_')}_Timetable.pdf`;
+  pdf.save(filename);
+}
 
     function generateSingleTeacher() {
       const teacher = document.getElementById("teacherDropdown").value;
