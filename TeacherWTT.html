@@ -36,6 +36,8 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      display: inline-block;
+      margin-right: 10px;
     }
     button:hover {
       background-color: #0056b3;
@@ -57,11 +59,12 @@
       background: #dceeff;
     }
     @media print {
-      select, button { display: none; }
+      select, .controls button { display: none; }
       body { padding: 0; margin: 0; }
       @page { size: A4 landscape; margin: 1cm; }
     }
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -70,11 +73,19 @@
   <div class="container">
     <h1>GCW KARNAL</h1>
     <h2>Teacher Weekly Timetable View</h2>
+    
     <select id="teacherDropdown">
       <option value="">-- Select Teacher --</option>
     </select>
-    <button onclick="showSchedule()">Print This Teacher</button>
-    <button onclick="printAllSchedules()">Print All Teachers</button>
+
+    <div class="controls">
+      <button onclick="generateSchedule()">Generate Timetable</button>
+      <button onclick="printThisSchedule()">Print This Teacher</button>
+      <button onclick="printAllSchedules()">Print All Teachers</button>
+      <button onclick="downloadPDF()">Download PDF</button>
+
+    </div>
+
     <div id="output"></div>
   </div>
 
@@ -91,7 +102,7 @@
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
 
-    async function loadTeachers() {
+    window.addEventListener("DOMContentLoaded", async () => {
       const snapshot = await db.ref("FlattenedTT").once("value");
       const data = Object.values(snapshot.val() || {});
       const teachers = [...new Set(data.map(d => d.Teacher?.trim()).filter(Boolean))].sort();
@@ -102,9 +113,9 @@
         opt.textContent = t;
         dropdown.appendChild(opt);
       });
-    }
+    });
 
-    async function showSchedule() {
+    async function generateSchedule() {
       const name = document.getElementById("teacherDropdown").value.trim().toLowerCase();
       if (!name) return alert("Please select a teacher.");
 
@@ -137,6 +148,50 @@
       document.getElementById("output").innerHTML = html;
     }
 
+    function printThisSchedule() {
+      const content = document.getElementById("output").innerHTML;
+      if (!content.trim()) return alert("Please generate the timetable first.");
+
+      const printWindow = window.open('', '', 'width=1200,height=800');
+      printWindow.document.write(`
+        <html><head><title>Teacher Timetable</title>
+        <style>
+          body { font-family: Arial; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+          th, td { border: 1px solid #aaa; padding: 6px; font-size: 12px; text-align: center; }
+          th { background: #dceeff; }
+          @media print { @page { size: A4 landscape; margin: 1cm; } }
+        </style>
+        </head><body>
+        <h2>Teacher Weekly Timetable</h2>
+        ${content}
+        </body></html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+
+  function downloadPDF() {
+    const content = document.getElementById("output");
+    if (!content.innerHTML.trim()) {
+      alert("Please generate the timetable first.");
+      return;
+    }
+
+    const teacherName = document.getElementById("teacherDropdown").value || "Teacher_Timetable";
+
+    const opt = {
+      margin:       0.5,
+      filename:     `${teacherName}_Timetable.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
+
+    html2pdf().set(opt).from(content).save();
+  }
+
     async function printAllSchedules() {
       const snapshot = await db.ref("FlattenedTT").once("value");
       const data = Object.values(snapshot.val() || {});
@@ -152,7 +207,7 @@
       let html = `<html><head><title>All Teachers</title><style>
         body { font-family: Arial; padding: 20px; }
         h2 { margin-top: 30px; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; table-layout: fixed; }
         th, td { border: 1px solid #aaa; padding: 6px; font-size: 12px; text-align: center; }
         th { background: #dceeff; }
         @media print { @page { size: A4 landscape; } }
@@ -191,8 +246,6 @@
       printWindow.focus();
       printWindow.print();
     }
-
-    window.addEventListener("DOMContentLoaded", loadTeachers);
   </script>
 </body>
 </html>
