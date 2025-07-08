@@ -21,6 +21,25 @@
     h1, h2 {
       text-align: center;
     }
+    select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -37,21 +56,10 @@
     th {
       background: #dceeff;
     }
-    select, button {
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-    }
-    .button-row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
     @media print {
-      @page { size: landscape; }
-      select, .button-row, h1, h2 { display: none; }
+      select, button { display: none; }
       body { padding: 0; margin: 0; }
+      @page { size: A4 landscape; margin: 1cm; }
     }
   </style>
 
@@ -62,17 +70,11 @@
   <div class="container">
     <h1>GCW KARNAL</h1>
     <h2>Teacher Weekly Timetable View</h2>
-
     <select id="teacherDropdown">
       <option value="">-- Select Teacher --</option>
     </select>
-
-    <div class="button-row">
-      <button onclick="showSchedule()">Generate Timetable</button>
-      <button onclick="window.print()">Print Current</button>
-      <button onclick="printAllSchedules()">Print All</button>
-    </div>
-
+    <button onclick="showSchedule()">Print This Teacher</button>
+    <button onclick="printAllSchedules()">Print All Teachers</button>
     <div id="output"></div>
   </div>
 
@@ -91,49 +93,35 @@
 
     async function loadTeachers() {
       const snapshot = await db.ref("FlattenedTT").once("value");
-      const rows = Object.values(snapshot.val() || {});
-      const teacherSet = new Set();
-
-      rows.forEach(r => {
-        const teacher = (r.Teacher || "").trim();
-        if (teacher) teacherSet.add(teacher);
-      });
-
+      const data = Object.values(snapshot.val() || {});
+      const teachers = [...new Set(data.map(d => d.Teacher?.trim()).filter(Boolean))].sort();
       const dropdown = document.getElementById("teacherDropdown");
-      [...teacherSet].sort().forEach(name => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        dropdown.appendChild(option);
+      teachers.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        dropdown.appendChild(opt);
       });
     }
 
     async function showSchedule() {
-      const selectedTeacher = document.getElementById("teacherDropdown").value.trim();
-      if (!selectedTeacher) return alert("Please select a teacher.");
+      const name = document.getElementById("teacherDropdown").value.trim().toLowerCase();
+      if (!name) return alert("Please select a teacher.");
 
       const snapshot = await db.ref("FlattenedTT").once("value");
       const rows = Object.values(snapshot.val() || {});
-      const filtered = rows.filter(r => (r.Teacher || "").trim() === selectedTeacher);
-
-      document.getElementById("output").innerHTML = generateScheduleHTML(filtered, selectedTeacher);
-    }
-
-    function generateScheduleHTML(entries, teacherName = '') {
+      const filtered = rows.filter(r => (r.Teacher || "").trim().toLowerCase() === name);
       const map = {};
       for (let d of days) map[d] = {};
 
-      entries.forEach(entry => {
-        (entry.Days || "").split(/,|-/).forEach(day => {
+      filtered.forEach(entry => {
+        entry.Days?.split(/,|-/).forEach(day => {
           const d = day.trim();
-          if (days.includes(d)) {
-            map[d][entry.Time_Slot] = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
-          }
+          map[d][entry.Time_Slot] = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
         });
       });
 
-      let html = `<h3>${teacherName ? 'Timetable for: ' + teacherName : ''}</h3>`;
-      html += `<table><tr><th>Day / Time</th>`;
+      let html = `<table><tr><th>Day / Time</th>`;
       timeSlots.forEach(s => html += `<th>${s}</th>`);
       html += '</tr>';
 
@@ -145,48 +133,63 @@
         html += '</tr>';
       });
 
-      html += '</table><br/>';
-      return html;
+      html += '</table>';
+      document.getElementById("output").innerHTML = html;
     }
 
     async function printAllSchedules() {
       const snapshot = await db.ref("FlattenedTT").once("value");
-      const rows = Object.values(snapshot.val() || {});
+      const data = Object.values(snapshot.val() || {});
       const teacherMap = {};
 
-      rows.forEach(r => {
-        const teacher = (r.Teacher || "").trim();
+      data.forEach(entry => {
+        const teacher = (entry.Teacher || '').trim();
         if (!teacher) return;
         if (!teacherMap[teacher]) teacherMap[teacher] = [];
-        teacherMap[teacher].push(r);
+        teacherMap[teacher].push(entry);
       });
 
-      let html = '';
-      Object.keys(teacherMap).sort().forEach(name => {
-        html += generateScheduleHTML(teacherMap[name], name);
-      });
+      let html = `<html><head><title>All Teachers</title><style>
+        body { font-family: Arial; padding: 20px; }
+        h2 { margin-top: 30px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; }
+        th, td { border: 1px solid #aaa; padding: 6px; font-size: 12px; text-align: center; }
+        th { background: #dceeff; }
+        @media print { @page { size: A4 landscape; } }
+      </style></head><body>`;
+
+      for (const teacher in teacherMap) {
+        const map = {};
+        for (let d of days) map[d] = {};
+        teacherMap[teacher].forEach(entry => {
+          const slot = entry.Time_Slot;
+          const text = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
+          const daysList = (entry.Days || '').split(/,|-/).map(d => d.trim());
+          daysList.forEach(day => {
+            if (map[day]) map[day][slot] = text;
+          });
+        });
+
+        html += `<h2>${teacher}</h2><table><tr><th>Day / Time</th>`;
+        timeSlots.forEach(slot => html += `<th>${slot}</th>`);
+        html += '</tr>';
+        days.forEach(day => {
+          html += `<tr><th>${day}</th>`;
+          timeSlots.forEach(slot => {
+            html += `<td>${map[day][slot] || ''}</td>`;
+          });
+          html += '</tr>';
+        });
+        html += '</table><hr />';
+      }
+
+      html += `</body></html>`;
 
       const printWindow = window.open('', '', 'width=1200,height=800');
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>All Teacher Schedules</title>
-          <style>
-            body { font-family: Arial; padding: 1rem; }
-            h3 { text-align: center; margin-top: 30px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; table-layout: fixed; }
-            th, td { border: 1px solid #aaa; padding: 8px; text-align: center; font-size: 13px; word-wrap: break-word; }
-            th { background-color: #dceeff; }
-            @media print { @page { size: landscape; } }
-          </style>
-        </head>
-        <body>
-          ${html}
-          <script>window.onload = function() { window.print(); }</script>
-        </body>
-        </html>
-      `);
+      printWindow.document.write(html);
       printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
     }
 
     window.addEventListener("DOMContentLoaded", loadTeachers);
