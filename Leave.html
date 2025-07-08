@@ -122,100 +122,103 @@
     <p>Loading...</p>
   </div>
 
-  <script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pub?output=csv';
+ <script>
+  const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pub?output=csv';
 
-    const today = new Date();
-    const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    const todayISO = today.toISOString().slice(0, 10);
+  const today = new Date();
+  const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const todayISO = today.toISOString().slice(0, 10);
 
-    document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
+  document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
-    function parseCSV(csv) {
-      const lines = csv.trim().split('\n');
-      const headers = lines[0].split(',');
-      const data = lines.slice(1).map(line => {
-        const values = line.split(',');
-        const entry = {};
-        headers.forEach((header, i) => {
-          entry[header.trim()] = values[i]?.trim();
-        });
-        return entry;
+  function parseCSV(csv) {
+    const lines = csv.trim().split('\n');
+    const headers = lines[0].split(',');
+    const data = lines.slice(1).map(line => {
+      const values = line.split(',');
+      const entry = {};
+      headers.forEach((header, i) => {
+        entry[header.trim()] = values[i]?.trim();
       });
-      return data;
-    }
+      return entry;
+    });
+    return data;
+  }
 
-   function getLastUpdatedFromCSV(data) {
-  const timestamps = data
-    .map(row => row.LastUpdated)
-    .filter(val => val && val.trim())
-    .map(val => val.replace(/[\r\n]+/g, ' ').trim()); // Replace newlines with space
-
-  if (timestamps.length === 0) return "unavailable";
-
-  // Use the latest by sorting, assuming formatted as "08 Jul 2025, 01:55 PM"
-  timestamps.sort((a, b) => new Date(b) - new Date(a));
-
-  return timestamps[0];
-}
-
-
-
-    fetch(csvUrl)
-      .then(res => res.text())
-      .then(csvText => {
-        const data = parseCSV(csvText);
-
-        const lastUpdatedText = getLastUpdatedFromCSV(data);
-        document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
-
-        const container = document.getElementById('leaveContainer');
-        const todaysLeaves = data.filter(row => row.Date === todayISO);
-
-        if (todaysLeaves.length === 0) {
-          container.innerHTML = '<div class="no-leaves">No teachers are on leave today.</div>';
-        } else {
-          let html = `
-            <table>
-              <thead>
-                <tr>
-                  <th>S. No.</th>
-                  <th>Name</th>
-                  <th>Department</th>
-                  <th>Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-          `;
-
-          todaysLeaves.forEach((row, index) => {
-            html += `
-              <tr>
-                <td>${index + 1}</td>
-                <td>${row.Name}</td>
-                <td>${row.Department}</td>
-                <td>${row.Reason}</td>
-              </tr>
-            `;
-          });
-
-          html += `
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="4">Total teachers on leave: ${todaysLeaves.length}</td>
-                </tr>
-              </tfoot>
-            </table>
-          `;
-
-          container.innerHTML = html;
-        }
+  function getLastUpdatedFromCSV(data) {
+    const timestamps = data
+      .map(row => row.LastUpdated)
+      .filter(val => val && val.trim())
+      .map(val => {
+        const cleaned = val.replace(/[\r\n]+/g, ' ').trim(); // remove line breaks
+        const match = cleaned.match(/\d{2} \w{3} \d{4}, \d{2}:\d{2} (AM|PM)/);
+        return match ? match[0] : null;
       })
-      .catch(err => {
-        console.error('CSV load error:', err);
-        document.getElementById('leaveContainer').innerHTML = '<div class="no-leaves">⚠️ Failed to load leave data.</div>';
-      });
-  </script>
+      .filter(Boolean);
+
+    if (timestamps.length === 0) return "unavailable";
+
+    timestamps.sort((a, b) => new Date('01 ' + b) - new Date('01 ' + a)); // fake "day" for Date parsing
+
+    return timestamps[0];
+  }
+
+  fetch(csvUrl)
+    .then(res => res.text())
+    .then(csvText => {
+      const data = parseCSV(csvText);
+
+      const lastUpdatedText = getLastUpdatedFromCSV(data);
+      document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
+
+      const container = document.getElementById('leaveContainer');
+      const todaysLeaves = data.filter(row => row.Date === todayISO);
+
+      if (todaysLeaves.length === 0) {
+        container.innerHTML = '<div class="no-leaves">No teachers are on leave today.</div>';
+      } else {
+        let html = `
+          <table>
+            <thead>
+              <tr>
+                <th>S. No.</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        todaysLeaves.forEach((row, index) => {
+          html += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${row.Name}</td>
+              <td>${row.Department}</td>
+              <td>${row.Reason}</td>
+            </tr>
+          `;
+        });
+
+        html += `
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4">Total teachers on leave: ${todaysLeaves.length}</td>
+              </tr>
+            </tfoot>
+          </table>
+        `;
+
+        container.innerHTML = html;
+      }
+    })
+    .catch(err => {
+      console.error('CSV load error:', err);
+      document.getElementById('leaveContainer').innerHTML = '<div class="no-leaves">⚠️ Failed to load leave data.</div>';
+    });
+</script>
+
 </body>
 </html>
