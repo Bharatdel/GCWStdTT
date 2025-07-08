@@ -20,7 +20,7 @@
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      align-items: left;
+      align-items: flex-start;
       justify-content: flex-start;
     }
 
@@ -35,12 +35,24 @@
       font-size: 36px;
       font-weight: bold;
       margin: 10px 0;
+      width: 100%;
     }
-h2 {
+
+    h2 {
       text-align: center;
       font-size: 24px;
       font-weight: bold;
       margin: 10px 0;
+      width: 100%;
+      position: relative;
+    }
+
+    h2::after {
+      content: "";
+      display: block;
+      margin: 8px auto 0 auto;
+      width: 60%;
+      border-bottom: 2px dotted #000;
     }
 
     .header-row {
@@ -48,7 +60,7 @@ h2 {
       margin: 10px 0;
       width: 100%;
       display: flex;
-      justify-content: left;
+      justify-content: flex-start;
     }
 
     .header-row span {
@@ -204,8 +216,8 @@ h2 {
         page.innerHTML = `
           
           <h1>Govt. College for Women, KARNAL</h1>
-          <h2> Teacher-Wise Time Table for the Session 2025-26</h2>
-          <div class="header-row"><span>Teacher Name: Dr. </span><div>${teacher}</div></div>
+          <h2>Teacher-Wise Time Table for the Session 2025-26</h2>
+          <div class="header-row"><span>Teacher Name:</span><div>${teacher}</div></div>
           <div class="header-row"><span>Department:</span><div>______________________</div></div>
           <div class="header-row"><span>Arrival Time:</span><div>______________________</div></div>
           <div class="header-row"><span>Departure Time:</span><div>______________________</div></div>
