@@ -96,7 +96,6 @@
 
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pub?output=csv';
-    const sheetMetaUrl = 'https://script.google.com/macros/s/AKfycbyFQ1lST8i26j5_qQI8UXSVTNzjnhDwXoo2-5XFnTk/dev';
 
     const today = new Date();
     const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -104,21 +103,6 @@
 
     document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
-    // Fetch last updated time
-    // New way: get from CSV itself
-function getLastUpdatedFromCSV(data) {
-  const nonEmptyRows = data.filter(row => row.LastUpdated);
-  if (nonEmptyRows.length === 0) return "unavailable";
-
-  // Return the most recent timestamp
-  const sorted = nonEmptyRows.sort((a, b) => new Date(b.LastUpdated) - new Date(a.LastUpdated));
-  const latest = new Date(sorted[0].LastUpdated);
-
-  return latest.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-
-    // Parse CSV and display leave data
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
       const headers = lines[0].split(',');
@@ -132,14 +116,33 @@ function getLastUpdatedFromCSV(data) {
       });
       return data;
     }
-const data = parseCSV(csvText);
-const lastUpdatedText = getLastUpdatedFromCSV(data);
-document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
+
+    function getLastUpdatedFromCSV(data) {
+      const nonEmptyRows = data.filter(row => row.LastUpdated);
+      if (nonEmptyRows.length === 0) return "unavailable";
+
+      const sorted = nonEmptyRows.sort((a, b) => new Date(b.LastUpdated) - new Date(a.LastUpdated));
+      const latest = new Date(sorted[0].LastUpdated);
+
+      return latest.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
 
     fetch(csvUrl)
       .then(res => res.text())
       .then(csvText => {
         const data = parseCSV(csvText);
+
+        // ✅ Set Last Updated timestamp
+        const lastUpdatedText = getLastUpdatedFromCSV(data);
+        document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
+
+        // ✅ Filter and display today's leaves
         const container = document.getElementById('leaveContainer');
         const todaysLeaves = data.filter(row => row.Date === todayISO);
 
