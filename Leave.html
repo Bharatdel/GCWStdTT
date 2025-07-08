@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Teachers on Leave Today</title>
   <script src="https://cdn.jsdelivr.net/npm/tabletop@1.6.4/tabletop.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
+      max-width: 700px;
+      margin: auto;
     }
     h2 {
       color: #333;
@@ -17,33 +20,34 @@
     li {
       margin-bottom: 8px;
     }
+    .no-leaves {
+      color: gray;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
-  <h1> Govt. College for Women, KARNAL </h1>  
-  <h2 id="heading">Teachers on Leave Today</h2>
+  <h1> Govt. College for Women, KARNAL  </h1>
+  <h2 id="heading">Teachers on Leave for the Day</h2>
   <ul id="leaveList">Loading...</ul>
 
   <script>
     const publicSpreadsheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pubhtml';
 
-    // Format today’s date as: 8 July 2025
     const todayDateObj = new Date();
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    const todayFormatted = todayDateObj.toLocaleDateString('en-GB', options); // DD Month YYYY
-    const todayISO = todayDateObj.toISOString().slice(0, 10); // YYYY-MM-DD
+    const todayFormatted = todayDateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const todayISO = todayDateObj.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-    // Update heading
     document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
-    function showInfo(data, tabletop) {
+    function showInfo(data) {
       const list = document.getElementById('leaveList');
       list.innerHTML = '';
       let count = 0;
 
       data.forEach(row => {
-        const date = row.Date;  // must match column header
-        if (date === todayISO) {
+        const leaveDate = row.Date?.trim(); // column must be named "Date"
+        if (leaveDate === todayISO) {
           const li = document.createElement('li');
           li.textContent = `${row.Name} (${row.Department}) – ${row.Reason}`;
           list.appendChild(li);
@@ -52,7 +56,7 @@
       });
 
       if (count === 0) {
-        list.innerHTML = '<li>No teachers are on leave today.</li>';
+        list.innerHTML = '<li class="no-leaves">No teachers are on leave today.</li>';
       }
     }
 
