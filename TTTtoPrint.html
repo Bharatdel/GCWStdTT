@@ -63,6 +63,7 @@
       border: 1px solid #ccc;
       padding: 12px;
       text-align: left;
+      vertical-align: top;
     }
 
     th {
@@ -150,10 +151,10 @@
         const slot = entry["Time_Slot"]?.trim();
         if (!teacher || !slot) return;
 
-        if (!teacherMap[teacher]) teacherMap[teacher] = [];
+        if (!teacherMap[teacher]) teacherMap[teacher] = {};
+        if (!teacherMap[teacher][slot]) teacherMap[teacher][slot] = [];
 
-        teacherMap[teacher].push({
-          Time_Slot: slot,
+        teacherMap[teacher][slot].push({
           Class: entry["Class"] || "",
           Subject: entry["Subject"] || "",
           Days: entry["Days"] || "",
@@ -167,9 +168,30 @@
         const page = document.createElement("div");
         page.className = "teacher-page";
 
-        const sortedRows = teacherMap[teacher].sort((a, b) =>
-          timeOrder.indexOf(a.Time_Slot) - timeOrder.indexOf(b.Time_Slot)
-        );
+        const rowsHTML = timeOrder.map(slot => {
+          const entries = teacherMap[teacher][slot] || [];
+          if (entries.length === 0) return `
+            <tr>
+              <td>${slot}</td>
+              <td colspan="4"></td>
+            </tr>`;
+
+          const merged = {
+            Class: entries.map(e => e.Class).join("\n"),
+            Subject: entries.map(e => e.Subject).join("\n"),
+            Days: entries.map(e => e.Days).join("\n"),
+            Room_No: entries.map(e => e.Room_No).join("\n")
+          };
+
+          return `
+            <tr>
+              <td>${slot}</td>
+              <td>${merged.Class}</td>
+              <td>${merged.Subject}</td>
+              <td>${merged.Days}</td>
+              <td>${merged.Room_No}</td>
+            </tr>`;
+        }).join("");
 
         page.innerHTML = `
           <img src="Logo.jpg" alt="Logo" class="logo" />
@@ -190,15 +212,7 @@
               </tr>
             </thead>
             <tbody>
-              ${sortedRows.map(row => `
-                <tr>
-                  <td>${row.Time_Slot}</td>
-                  <td>${row.Class}</td>
-                  <td>${row.Subject}</td>
-                  <td>${row.Days}</td>
-                  <td>${row.Room_No}</td>
-                </tr>
-              `).join('')}
+              ${rowsHTML}
             </tbody>
           </table>
 
