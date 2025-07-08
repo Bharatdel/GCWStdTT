@@ -2,9 +2,10 @@
 <html>
 <head>
   <title>Teachers on Leave Today</title>
+  <script src="https://cdn.jsdelivr.net/npm/tabletop@1.6.4/tabletop.js"></script>
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       padding: 20px;
     }
     h2 {
@@ -19,44 +20,49 @@
   </style>
 </head>
 <body>
-  <h2>Teachers on Leave Today</h2>
+  <h1> Govt. College for Women, KARNAL </h1>  
+  <h2 id="heading">Teachers on Leave Today</h2>
   <ul id="leaveList">Loading...</ul>
 
   <script>
-    const sheetID = '1D-9UCN_xlgCGu_3vVVt01AECmI2wfdwv1fOgs3-w6aE';
-    const url = `https://spreadsheets.google.com/feeds/list/${sheetID}/1/public/values?alt=json`;
-    const today = new Date().toISOString().slice(0, 10);
+    const publicSpreadsheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pubhtml';
 
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        const entries = data.feed.entry;
-        const list = document.getElementById('leaveList');
-        list.innerHTML = '';
-        let count = 0;
+    // Format today’s date as: 8 July 2025
+    const todayDateObj = new Date();
+    const options = { day: 'numeric', month: 'long', year: 'numeric' };
+    const todayFormatted = todayDateObj.toLocaleDateString('en-GB', options); // DD Month YYYY
+    const todayISO = todayDateObj.toISOString().slice(0, 10); // YYYY-MM-DD
 
-        entries.forEach(entry => {
-          const name = entry.gsx$name.$t;
-          const dept = entry.gsx$department.$t;
-          const date = entry.gsx$date.$t;
-          const reason = entry.gsx$reason.$t;
+    // Update heading
+    document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
-          if (date === today) {
-            const li = document.createElement('li');
-            li.textContent = `${name} (${dept}) – ${reason}`;
-            list.appendChild(li);
-            count++;
-          }
-        });
+    function showInfo(data, tabletop) {
+      const list = document.getElementById('leaveList');
+      list.innerHTML = '';
+      let count = 0;
 
-        if (count === 0) {
-          list.innerHTML = '<li>No teachers are on leave today.</li>';
+      data.forEach(row => {
+        const date = row.Date;  // must match column header
+        if (date === todayISO) {
+          const li = document.createElement('li');
+          li.textContent = `${row.Name} (${row.Department}) – ${row.Reason}`;
+          list.appendChild(li);
+          count++;
         }
-      })
-      .catch(err => {
-        document.getElementById('leaveList').innerHTML = 'Failed to load data.';
-        console.error(err);
       });
+
+      if (count === 0) {
+        list.innerHTML = '<li>No teachers are on leave today.</li>';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      Tabletop.init({
+        key: publicSpreadsheetURL,
+        callback: showInfo,
+        simpleSheet: true
+      });
+    });
   </script>
 </body>
 </html>
