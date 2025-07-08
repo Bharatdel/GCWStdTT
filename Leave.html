@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Teachers on Leave Today</title>
-  <script src="https://cdn.jsdelivr.net/npm/tabletop@1.6.4/tabletop.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,15 +11,8 @@
       max-width: 700px;
       margin: auto;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
-      font-size: 22px;
-      margin-bottom: 0;
-    }
-    h2 {
-      text-align: center;
-      color: #333;
-      margin-top: 5px;
     }
     ul {
       padding-left: 20px;
@@ -40,11 +33,11 @@
   <ul id="leaveList">Loading...</ul>
 
   <script>
-    const publicSpreadsheetURL = 'https://docs.google.com/spreadsheets/d/1D-9UCN_xlgCGu_3vVVt01AECmI2wfdwv1fOgs3-w6aE/edit?usp=sharing';
+    const publicSpreadsheetURL = 'https://docs.google.com/spreadsheets/d/1D-9UCN_xlgCGu_3vVVt01AECmI2wfdwv1fOgs3-w6aE/pubhtml';
 
-    const todayDateObj = new Date();
-    const todayFormatted = todayDateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    const todayISO = todayDateObj.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const today = new Date();
+    const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const todayISO = today.toISOString().slice(0, 10); // e.g. "2025-07-08"
 
     document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
