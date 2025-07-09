@@ -55,110 +55,116 @@
     <tbody></tbody>
   </table>
 
-  <script>
-    // TODO: Replace with your actual Firebase config
-      const firebaseConfig = {
-      apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
-      authDomain: "gcw-timetable.firebaseapp.com",
-      databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "gcw-timetable",
-      storageBucket: "gcw-timetable.appspot.com",
-      messagingSenderId: "654415403426",
-      appId: "1:654415403426:web:7651a0a730ac20186a3afb"
-    };
+ <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+    authDomain: "gcw-timetable.firebaseapp.com",
+    databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gcw-timetable",
+    storageBucket: "gcw-timetable.appspot.com",
+    messagingSenderId: "654415403426",
+    appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+  };
 
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
 
-    const timeSlots = [
-      "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
-    ];
-
-    // Generate a pastel color from a string (Class name)
-    function stringToColor(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const h = Math.abs(hash) % 360;
-      return `hsl(${h}, 70%, 85%)`;
+  function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 70%, 85%)`;
+  }
 
-    db.ref("FlattenedTT").once("value")
-      .then(snapshot => {
-        const data = snapshot.val();
-        if (!data) {
-          alert("No data found in Firebase.");
-          return;
+  db.ref("FlattenedTT").once("value")
+    .then(snapshot => {
+      const data = snapshot.val();
+      if (!data) {
+        alert("No data found in Firebase.");
+        return;
+      }
+
+      const teacherMap = {};
+      const colorMap = {};
+      const periodCount = {};  // <--- To hold LAB/Theory count
+
+      Object.keys(data).forEach(key => {
+        const entry = data[key];
+        const teacher = entry["Teacher"]?.trim();
+        const time = entry["Time_Slot"]?.trim();
+        const className = entry["Class"]?.trim();
+        const subject = entry["Subject"]?.trim() || "-";
+
+        if (!teacher || !time || !className) return;
+
+        if (!teacherMap[teacher]) {
+          teacherMap[teacher] = {};
+          timeSlots.forEach(slot => teacherMap[teacher][slot] = []);
+          periodCount[teacher] = { lab: 0, theory: 0 };
         }
 
-        const teacherMap = {};
-        const colorMap = {};
+        const info = {
+          text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${subject}\nRoom: ${entry["Room_No"] || "-"}`,
+          class: entry["Class"]
+        };
 
-        Object.keys(data).forEach(key => {
-          const entry = data[key];
-          const teacher = entry["Teacher"]?.trim();
-          const time = entry["Time_Slot"]?.trim();
-          const className = entry["Class"]?.trim();
-          const subName = entry["Subject"]?.trim();
+        teacherMap[teacher][time].push(info);
 
-          if (!teacher || !time || !className) return;
+        // Count periods
+        if (subject.toLowerCase().includes("lab")) {
+          periodCount[teacher].lab += 1;
+        } else {
+          periodCount[teacher].theory += 1;
+        }
 
-          if (!teacherMap[teacher]) {
-            teacherMap[teacher] = {};
-            timeSlots.forEach(slot => teacherMap[teacher][slot] = []);
-          }
-
-          const info = {
-            text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${entry["Subject"] || "-"}\nRoom: ${entry["Room_No"] || "-"}`,
-            class: entry["Class"]
-          };
-
-
-          teacherMap[teacher][time].push(info);
-
-          if (!colorMap[className]) {
-            colorMap[className] = stringToColor(className);
-          }
-        });
-
-        const tbody = document.querySelector("#timetable tbody");
-
-        Object.keys(teacherMap).sort().forEach(teacher => {
-          const row = document.createElement("tr");
-
-          const nameCell = document.createElement("td");
-          nameCell.textContent = teacher;
-          row.appendChild(nameCell);
-
-          timeSlots.forEach(slot => {
-            const cell = document.createElement("td");
-
-            if (teacherMap[teacher][slot].length > 0) {
-              teacherMap[teacher][slot].forEach(entry => {
-                const div = document.createElement("div");
-                div.textContent = entry.text;
-                div.style.backgroundColor = colorMap[entry.class];
-                div.style.borderRadius = "6px";
-                div.style.padding = "4px";
-                div.style.marginBottom = "6px";
-                div.style.border = "1px solid #aaa";
-                cell.appendChild(div);
-              });
-            }
-
-            row.appendChild(cell);
-          });
-
-          tbody.appendChild(row);
-        });
-      })
-      .catch(error => {
-        console.error("Firebase fetch error:", error);
-        alert("Failed to load timetable. Check console.");
+        if (!colorMap[className]) {
+          colorMap[className] = stringToColor(className);
+        }
       });
-  </script>
+
+      const tbody = document.querySelector("#timetable tbody");
+
+      Object.keys(teacherMap).sort().forEach(teacher => {
+        const row = document.createElement("tr");
+
+        const nameCell = document.createElement("td");
+
+        const labCount = periodCount[teacher].lab;
+        const theoryCount = periodCount[teacher].theory;
+
+        nameCell.textContent = `${teacher} (${labCount} LAB + ${theoryCount} Theory)`;
+        row.appendChild(nameCell);
+
+        timeSlots.forEach(slot => {
+          const cell = document.createElement("td");
+
+          if (teacherMap[teacher][slot].length > 0) {
+            teacherMap[teacher][slot].forEach(entry => {
+              const div = document.createElement("div");
+              div.textContent = entry.text;
+              div.style.backgroundColor = colorMap[entry.class];
+              div.style.borderRadius = "6px";
+              div.style.padding = "4px";
+              div.style.marginBottom = "6px";
+              div.style.border = "1px solid #aaa";
+              cell.appendChild(div);
+            });
+          }
+
+          row.appendChild(cell);
+        });
+
+        tbody.appendChild(row);
+      });
+    })
+    .catch(error => {
+      console.error("Firebase fetch error:", error);
+      alert("Failed to load timetable. Check console.");
+    });
+</script>
 </body>
 </html>
