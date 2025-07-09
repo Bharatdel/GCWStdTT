@@ -29,6 +29,28 @@
     h1 {
       text-align: center;
     }
+    .checkbox-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.checkbox-container label {
+  padding: 6px 10px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-container input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.2);
+}
+
     #teacherSelector {
       margin: 20px 0;
       max-height: 200px;
@@ -122,8 +144,11 @@
   let theory = 0, lab = 0;
 
   entries.forEach(entry => {
-    const fullText = (entry.Subject || '') + ' ' + (entry.Section || '');
-    const isLab = /lab/i.test(fullText);
+    const subject = entry.Subject || "";
+    const section = entry.Section || "";
+    const fullText = subject + " " + section;
+
+    const isLab = /lab/i.test(fullText);  // will match anywhere
     const duration = slotDurations[entry.Time_Slot] || 1;
 
     const days = (entry.Days || "").split(/[,\/\-–]+/).map(d => d.trim()).filter(Boolean);
@@ -131,10 +156,14 @@
 
     if (isLab) lab += periods;
     else theory += periods;
+
+    // Debug log (optional)
+    // console.log(`[${subject}] | Section: [${section}] | Lab? ${isLab} | Days: ${days.length} | Slot: ${entry.Time_Slot} | Periods: ${periods}`);
   });
 
   return { theory, lab, total: theory + lab };
 }
+
 
     db.ref("FlattenedTT").once("value").then(snapshot => {
       const data = snapshot.val();
