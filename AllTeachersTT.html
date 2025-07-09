@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>All Teachers' Timetable - Admin View</title>
 
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -35,7 +34,6 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
-  
 </head>
 <body>
   <h1>Teacher Timetable (All Time Slots)</h1>
@@ -55,116 +53,120 @@
     <tbody></tbody>
   </table>
 
- <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
-    authDomain: "gcw-timetable.firebaseapp.com",
-    databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "gcw-timetable",
-    storageBucket: "gcw-timetable.appspot.com",
-    messagingSenderId: "654415403426",
-    appId: "1:654415403426:web:7651a0a730ac20186a3afb"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+      authDomain: "gcw-timetable.firebaseapp.com",
+      databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "gcw-timetable",
+      storageBucket: "gcw-timetable.appspot.com",
+      messagingSenderId: "654415403426",
+      appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
+    const timeSlots = [
+      "9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"
+    ];
 
-  function stringToColor(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const h = Math.abs(hash) % 360;
-    return `hsl(${h}, 70%, 85%)`;
-  }
-
-  db.ref("FlattenedTT").once("value")
-    .then(snapshot => {
-      const data = snapshot.val();
-      if (!data) {
-        alert("No data found in Firebase.");
-        return;
+    function stringToColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
       }
+      const h = Math.abs(hash) % 360;
+      return `hsl(${h}, 70%, 85%)`;
+    }
 
-      const teacherMap = {};
-      const colorMap = {};
-      const periodCount = {};  // <--- To hold LAB/Theory count
-
-      Object.keys(data).forEach(key => {
-        const entry = data[key];
-        const teacher = entry["Teacher"]?.trim();
-        const time = entry["Time_Slot"]?.trim();
-        const className = entry["Class"]?.trim();
-        const subject = entry["Subject"]?.trim() || "-";
-
-        if (!teacher || !time || !className) return;
-
-        if (!teacherMap[teacher]) {
-          teacherMap[teacher] = {};
-          timeSlots.forEach(slot => teacherMap[teacher][slot] = []);
-          periodCount[teacher] = { lab: 0, theory: 0 };
+    db.ref("FlattenedTT").once("value")
+      .then(snapshot => {
+        const data = snapshot.val();
+        if (!data) {
+          alert("No data found in Firebase.");
+          return;
         }
 
-        const info = {
-          text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${subject}\nRoom: ${entry["Room_No"] || "-"}`,
-          class: entry["Class"]
-        };
+        const teacherMap = {};
+        const colorMap = {};
+        const teacherHours = {};
 
-        teacherMap[teacher][time].push(info);
+        Object.keys(data).forEach(key => {
+          const entry = data[key];
+          const teacher = entry["Teacher"]?.trim();
+          const time = entry["Time_Slot"]?.trim();
+          const className = entry["Class"]?.trim();
+          const subName = entry["Subject"]?.trim();
+          const days = entry["Days"] || "";
 
-        // Count periods
-        if (subject.toLowerCase().includes("lab")) {
-          periodCount[teacher].lab += 1;
-        } else {
-          periodCount[teacher].theory += 1;
-        }
+          if (!teacher || !time || !className) return;
 
-        if (!colorMap[className]) {
-          colorMap[className] = stringToColor(className);
-        }
-      });
-
-      const tbody = document.querySelector("#timetable tbody");
-
-      Object.keys(teacherMap).sort().forEach(teacher => {
-        const row = document.createElement("tr");
-
-        const nameCell = document.createElement("td");
-
-        const labCount = periodCount[teacher].lab;
-        const theoryCount = periodCount[teacher].theory;
-
-        nameCell.textContent = `${teacher} (${labCount} LAB + ${theoryCount} Theory)`;
-        row.appendChild(nameCell);
-
-        timeSlots.forEach(slot => {
-          const cell = document.createElement("td");
-
-          if (teacherMap[teacher][slot].length > 0) {
-            teacherMap[teacher][slot].forEach(entry => {
-              const div = document.createElement("div");
-              div.textContent = entry.text;
-              div.style.backgroundColor = colorMap[entry.class];
-              div.style.borderRadius = "6px";
-              div.style.padding = "4px";
-              div.style.marginBottom = "6px";
-              div.style.border = "1px solid #aaa";
-              cell.appendChild(div);
-            });
+          if (!teacherMap[teacher]) {
+            teacherMap[teacher] = {};
+            timeSlots.forEach(slot => teacherMap[teacher][slot] = []);
           }
 
-          row.appendChild(cell);
+          const info = {
+            text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${entry["Subject"] || "-"}\nRoom: ${entry["Room_No"] || "-"}`,
+            class: entry["Class"]
+          };
+
+          teacherMap[teacher][time].push(info);
+
+          if (!colorMap[className]) {
+            colorMap[className] = stringToColor(className);
+          }
+
+          // Count hours logic
+          const numDays = days.split(/,|\/|&|\s+/).filter(Boolean).length;
+          const hours = 1 * numDays; // 1 hour per time slot * number of days
+          if (!teacherHours[teacher]) teacherHours[teacher] = { total: 0, theory: 0, lab: 0 };
+
+          teacherHours[teacher].total += hours;
+          if ((subName || "").toLowerCase().includes("lab")) {
+            teacherHours[teacher].lab += hours;
+          } else {
+            teacherHours[teacher].theory += hours;
+          }
         });
 
-        tbody.appendChild(row);
+        const tbody = document.querySelector("#timetable tbody");
+
+        Object.keys(teacherMap).sort().forEach(teacher => {
+          const row = document.createElement("tr");
+
+          const nameCell = document.createElement("td");
+          const hours = teacherHours[teacher] || { total: 0, theory: 0, lab: 0 };
+          nameCell.textContent = `${teacher} (${hours.total} hrs: ${hours.theory} Theory + ${hours.lab} Lab)`;
+          row.appendChild(nameCell);
+
+          timeSlots.forEach(slot => {
+            const cell = document.createElement("td");
+
+            if (teacherMap[teacher][slot].length > 0) {
+              teacherMap[teacher][slot].forEach(entry => {
+                const div = document.createElement("div");
+                div.textContent = entry.text;
+                div.style.backgroundColor = colorMap[entry.class];
+                div.style.borderRadius = "6px";
+                div.style.padding = "4px";
+                div.style.marginBottom = "6px";
+                div.style.border = "1px solid #aaa";
+                cell.appendChild(div);
+              });
+            }
+
+            row.appendChild(cell);
+          });
+
+          tbody.appendChild(row);
+        });
+      })
+      .catch(error => {
+        console.error("Firebase fetch error:", error);
+        alert("Failed to load timetable. Check console.");
       });
-    })
-    .catch(error => {
-      console.error("Firebase fetch error:", error);
-      alert("Failed to load timetable. Check console.");
-    });
-</script>
+  </script>
 </body>
 </html>
