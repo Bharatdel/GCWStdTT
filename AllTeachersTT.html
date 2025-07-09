@@ -189,12 +189,13 @@
         }
 
         const info = {
-          text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${entry["Subject"] || "-"}\nRoom: ${entry["Room_No"] || "-"}`,
-          class: entry["Class"],
-          Subject: subName || "",
-          Time_Slot: time,
-          Days: entry["Days"] || ""
-        };
+  text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${entry["Subject"] || "-"}\nRoom: ${entry["Room_No"] || "-"}`,
+  class: entry["Class"],
+  Subject: subName || "",
+  Section: entry["Section"] || "",
+  Time_Slot: time,
+  Days: entry["Days"] || ""
+};
 
         teacherMap[teacher][time].push(info);
         allEntries.push({ ...entry, Teacher: teacher, Time_Slot: time });
