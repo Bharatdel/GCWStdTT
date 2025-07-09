@@ -241,7 +241,8 @@
         const { theory, lab, total } = computeHours(allEntries);
 
         const nameCell = document.createElement("td");
-        nameCell.textContent = `${teacher} (${total} hrs: ${theory} Theory + ${lab} Lab)`;
+        nameCell.innerHTML = `${teacher}<br>(${total} hrs:<br>${theory} Theory + ${lab} Lab)`;
+
         row.appendChild(nameCell);
 
         timeSlots.forEach(slot => {
