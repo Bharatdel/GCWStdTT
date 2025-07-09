@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>All Teachers' Timetable - Admin View</title>
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -30,13 +29,39 @@
     h1 {
       text-align: center;
     }
+    #teacherSelector {
+      margin: 20px 0;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    .checkbox-group {
+      margin-bottom: 5px;
+    }
+    #generateBtn {
+      display: inline-block;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
   </style>
-  <!-- Firebase SDK -->
+
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
 </head>
+
 <body>
   <h1>Teacher Timetable (All Time Slots)</h1>
+
+  <div id="teacherSelector">
+    <strong>Select Teachers (optional):</strong><br />
+    <!-- Checkboxes will be dynamically added here -->
+  </div>
+
+  <button id="generateBtn">Generate Timetable</button>
+
   <table id="timetable">
     <thead>
       <tr>
@@ -63,7 +88,6 @@
       messagingSenderId: "654415403426",
       appId: "1:654415403426:web:7651a0a730ac20186a3afb"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -80,93 +104,134 @@
       return `hsl(${h}, 70%, 85%)`;
     }
 
-    db.ref("FlattenedTT").once("value")
-      .then(snapshot => {
-        const data = snapshot.val();
-        if (!data) {
-          alert("No data found in Firebase.");
-          return;
+    const teacherMap = {};
+    const colorMap = {};
+    let allTeachers = [];
+
+    function computeHours(entries) {
+  const slotDurations = {
+    "9 to 10": 1,
+    "10 to 11": 1,
+    "11 to 12": 1,
+    "12 to 1": 1,
+    "1 to 2": 1,
+    "2 to 3": 1,
+    "3 to 4": 1
+  };
+
+  let theory = 0, lab = 0;
+
+  entries.forEach(entry => {
+    const fullText = (entry.Subject || '') + ' ' + (entry.Section || '');
+    const isLab = /lab/i.test(fullText);
+    const duration = slotDurations[entry.Time_Slot] || 1;
+
+    const days = (entry.Days || "").split(/[,\/\-–]+/).map(d => d.trim()).filter(Boolean);
+    const periods = days.length * duration;
+
+    if (isLab) lab += periods;
+    else theory += periods;
+  });
+
+  return { theory, lab, total: theory + lab };
+}
+
+    db.ref("FlattenedTT").once("value").then(snapshot => {
+      const data = snapshot.val();
+      if (!data) {
+        alert("No data found in Firebase.");
+        return;
+      }
+
+      const allEntries = [];
+
+      Object.keys(data).forEach(key => {
+        const entry = data[key];
+        const teacher = entry["Teacher"]?.trim();
+        const time = entry["Time_Slot"]?.trim();
+        const className = entry["Class"]?.trim();
+        const subName = entry["Subject"]?.trim();
+
+        if (!teacher || !time || !className) return;
+
+        if (!teacherMap[teacher]) {
+          teacherMap[teacher] = {};
+          timeSlots.forEach(slot => teacherMap[teacher][slot] = []);
         }
 
-        const teacherMap = {};
-        const colorMap = {};
-        const teacherHours = {};
+        const info = {
+          text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${entry["Subject"] || "-"}\nRoom: ${entry["Room_No"] || "-"}`,
+          class: entry["Class"],
+          Subject: subName || "",
+          Time_Slot: time,
+          Days: entry["Days"] || ""
+        };
 
-        Object.keys(data).forEach(key => {
-          const entry = data[key];
-          const teacher = entry["Teacher"]?.trim();
-          const time = entry["Time_Slot"]?.trim();
-          const className = entry["Class"]?.trim();
-          const subName = entry["Subject"]?.trim();
-          const days = entry["Days"] || "";
+        teacherMap[teacher][time].push(info);
+        allEntries.push({ ...entry, Teacher: teacher, Time_Slot: time });
 
-          if (!teacher || !time || !className) return;
-
-          if (!teacherMap[teacher]) {
-            teacherMap[teacher] = {};
-            timeSlots.forEach(slot => teacherMap[teacher][slot] = []);
-          }
-
-          const info = {
-            text: `${entry["Class"]} - ${entry["Section"]} (${entry["Days"]})\nSubject: ${entry["Subject"] || "-"}\nRoom: ${entry["Room_No"] || "-"}`,
-            class: entry["Class"]
-          };
-
-          teacherMap[teacher][time].push(info);
-
-          if (!colorMap[className]) {
-            colorMap[className] = stringToColor(className);
-          }
-
-          // Count hours logic
-          const numDays = days.split(/,|\/|&|\s+/).filter(Boolean).length;
-          const hours = 1 * numDays; // 1 hour per time slot * number of days
-          if (!teacherHours[teacher]) teacherHours[teacher] = { total: 0, theory: 0, lab: 0 };
-
-          teacherHours[teacher].total += hours;
-          if ((subName || "").toLowerCase().includes("lab")) {
-            teacherHours[teacher].lab += hours;
-          } else {
-            teacherHours[teacher].theory += hours;
-          }
-        });
-
-        const tbody = document.querySelector("#timetable tbody");
-
-        Object.keys(teacherMap).sort().forEach(teacher => {
-          const row = document.createElement("tr");
-
-          const nameCell = document.createElement("td");
-          const hours = teacherHours[teacher] || { total: 0, theory: 0, lab: 0 };
-          nameCell.textContent = `${teacher} (${hours.total} hrs: ${hours.theory} Theory + ${hours.lab} Lab)`;
-          row.appendChild(nameCell);
-
-          timeSlots.forEach(slot => {
-            const cell = document.createElement("td");
-
-            if (teacherMap[teacher][slot].length > 0) {
-              teacherMap[teacher][slot].forEach(entry => {
-                const div = document.createElement("div");
-                div.textContent = entry.text;
-                div.style.backgroundColor = colorMap[entry.class];
-                div.style.borderRadius = "6px";
-                div.style.padding = "4px";
-                div.style.marginBottom = "6px";
-                div.style.border = "1px solid #aaa";
-                cell.appendChild(div);
-              });
-            }
-
-            row.appendChild(cell);
-          });
-
-          tbody.appendChild(row);
-        });
-      })
-      .catch(error => {
-        console.error("Firebase fetch error:", error);
-        alert("Failed to load timetable. Check console.");
+        if (!colorMap[className]) {
+          colorMap[className] = stringToColor(className);
+        }
       });
+
+      allTeachers = Object.keys(teacherMap).sort();
+      populateTeacherSelector(allTeachers);
+
+      document.getElementById("generateBtn").addEventListener("click", () => {
+        const selected = Array.from(document.querySelectorAll("#teacherSelector input:checked")).map(cb => cb.value);
+        generateTable(selected.length > 0 ? selected : allTeachers);
+      });
+
+      generateTable(allTeachers); // Default generation
+    });
+
+    function populateTeacherSelector(teachers) {
+      const container = document.getElementById("teacherSelector");
+      teachers.forEach(name => {
+        const div = document.createElement("div");
+        div.className = "checkbox-group";
+        div.innerHTML = `<label><input type="checkbox" value="${name}" /> ${name}</label>`;
+        container.appendChild(div);
+      });
+    }
+
+    function generateTable(selectedTeachers) {
+      const tbody = document.querySelector("#timetable tbody");
+      tbody.innerHTML = "";
+
+      selectedTeachers.forEach(teacher => {
+        const row = document.createElement("tr");
+
+        const allEntries = [];
+        timeSlots.forEach(slot => {
+          allEntries.push(...(teacherMap[teacher][slot] || []));
+        });
+
+        const { theory, lab, total } = computeHours(allEntries);
+
+        const nameCell = document.createElement("td");
+        nameCell.textContent = `${teacher} (${total} hrs: ${theory} Theory + ${lab} Lab)`;
+        row.appendChild(nameCell);
+
+        timeSlots.forEach(slot => {
+          const cell = document.createElement("td");
+          (teacherMap[teacher][slot] || []).forEach(entry => {
+            const div = document.createElement("div");
+            div.textContent = entry.text;
+            div.style.backgroundColor = colorMap[entry.class];
+            div.style.borderRadius = "6px";
+            div.style.padding = "4px";
+            div.style.marginBottom = "6px";
+            div.style.border = "1px solid #aaa";
+            cell.appendChild(div);
+          });
+          row.appendChild(cell);
+        });
+
+        tbody.appendChild(row);
+      });
+    }
   </script>
 </body>
 </html>
