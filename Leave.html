@@ -94,11 +94,13 @@
     tr:hover {
       background-color: #f1f1f1;
     }
- img {
+
+    img {
       display: block;
       margin: 0 auto 1rem;
       height: 80px;
     }
+
     .no-leaves {
       text-align: center;
       font-style: italic;
@@ -111,38 +113,46 @@
   </style>
 </head>
 <body>
-   <img src="Logo.jpg" alt="College Logo" />
+  <img src="Logo.jpg" alt="College Logo" />
   <h1>Govt. College for Women, KARNAL</h1>
   <h2 id="heading">Teachers on Leave for the Day</h2>
   <div id="lastUpdated">Last updated: fetching…</div>
-
   <button class="print-btn" onclick="window.print()">🖨️ Print</button>
-
-  <div id="leaveContainer">
-    <p>Loading...</p>
-  </div>
+  <div id="leaveContainer"><p>Loading...</p></div>
 
 <script>
   const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR-PiP2g2zzwlvf85YgCZMsLETGYIUqpyfibCGvybj8MJmT18hyBnvEciIgb9SwzhkyL3iuhio7CUhh/pub?output=csv';
 
   const today = new Date();
-  const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const todayISO = today.toISOString().slice(0, 10);
+  const todayFormatted = today.toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
 
   document.getElementById('heading').textContent = `Teachers on Leave for the Day: ${todayFormatted}`;
 
   function parseCSV(csv) {
     const lines = csv.trim().split('\n');
-    const headers = lines[0].split(',');
-    const data = lines.slice(1).map(line => {
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
       const values = line.split(',');
-      const entry = {};
+      const row = {};
       headers.forEach((header, i) => {
-        entry[header.trim()] = values[i]?.trim();
+        row[header] = values[i]?.trim();
       });
-      return entry;
+      return row;
     });
-    return data;
+  }
+
+  function normalizeDate(input) {
+    if (!input) return null;
+    const parts = input.trim().split(/[\/\-]/); // handles 7/9/2025 or 07-09-2025
+    if (parts.length !== 3) return null;
+
+    const [m, d, y] = parts.map(p => p.padStart(2, '0'));
+    const iso = `${y}-${m}-${d}`;
+    const date = new Date(iso);
+    return isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
   }
 
   function getLastUpdatedFromCSV(data) {
@@ -150,17 +160,10 @@
       .map(row => row.LastUpdated?.trim())
       .filter(val => val && val.length > 5);
 
-    if (timestamps.length === 0) return "unavailable";
-
-    const parsedDates = timestamps.map(str => {
-      const d = new Date(str); // Now valid format like "7/9/2025 2:00:25"
-      return isNaN(d.getTime()) ? null : d;
-    }).filter(Boolean);
-
+    const parsedDates = timestamps.map(str => new Date(str)).filter(d => !isNaN(d));
     if (parsedDates.length === 0) return "unavailable";
 
     const latest = new Date(Math.max(...parsedDates));
-
     return latest.toLocaleString('en-GB', {
       weekday: 'long',
       day: '2-digit',
@@ -176,17 +179,15 @@
     .then(res => res.text())
     .then(csvText => {
       const data = parseCSV(csvText);
+      document.getElementById('lastUpdated').textContent = `Last updated: ${getLastUpdatedFromCSV(data)}`;
 
-      const lastUpdatedText = getLastUpdatedFromCSV(data);
-      document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
+      const todaysLeaves = data.filter(row => {
+        const dateStr = row.Date?.trim();
+        const normalized = normalizeDate(dateStr);
+        return normalized === todayISO;
+      });
 
       const container = document.getElementById('leaveContainer');
-      const todaysLeaves = data.filter(row => {
-  const sheetDate = new Date(row.Date);
-  const sheetISO = sheetDate.toISOString().slice(0, 10);
-  return sheetISO === todayISO;
-});
-
 
       if (todaysLeaves.length === 0) {
         container.innerHTML = '<div class="no-leaves">No teachers are on leave today.</div>';
@@ -224,16 +225,15 @@
             </tfoot>
           </table>
         `;
-
         container.innerHTML = html;
       }
     })
     .catch(err => {
       console.error('CSV load error:', err);
-      document.getElementById('leaveContainer').innerHTML = '<div class="no-leaves">⚠️ Failed to load leave data.</div>';
+      document.getElementById('leaveContainer').innerHTML =
+        '<div class="no-leaves">⚠️ Failed to load leave data.</div>';
     });
 </script>
-
 
 </body>
 </html>
