@@ -181,7 +181,12 @@
       document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdatedText}`;
 
       const container = document.getElementById('leaveContainer');
-      const todaysLeaves = data.filter(row => row.Date === todayISO);
+      const todaysLeaves = data.filter(row => {
+  const sheetDate = new Date(row.Date);
+  const sheetISO = sheetDate.toISOString().slice(0, 10);
+  return sheetISO === todayISO;
+});
+
 
       if (todaysLeaves.length === 0) {
         container.innerHTML = '<div class="no-leaves">No teachers are on leave today.</div>';
