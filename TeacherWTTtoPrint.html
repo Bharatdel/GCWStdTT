@@ -220,60 +220,73 @@ async  function generateSchedule() {
     html2pdf().set(opt).from(content).save();
   }
 
-    async function printAllSchedules() {
-      const snapshot = await db.ref("FlattenedTT").once("value");
-      const data = Object.values(snapshot.val() || {});
-      const teacherMap = {};
+  async function printAllSchedules() {
+  const snapshot = await db.ref("FlattenedTT").once("value");
+  const data = Object.values(snapshot.val() || {});
+  const teacherMap = {};
 
-      data.forEach(entry => {
-        const teacher = (entry.Teacher || '').trim();
-        if (!teacher) return;
-        if (!teacherMap[teacher]) teacherMap[teacher] = [];
-        teacherMap[teacher].push(entry);
-      });
+  data.forEach(entry => {
+    const teacher = (entry.Teacher || '').trim();
+    if (!teacher) return;
+    if (!teacherMap[teacher]) teacherMap[teacher] = [];
+    teacherMap[teacher].push(entry);
+  });
 
-      let html = `<html><head><title>All Teachers</title><style>
-        body { font-family: Arial; padding: 20px; }
-        h2 { margin-top: 30px; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; table-layout: fixed; }
-        th, td { border: 1px solid #aaa; padding: 6px; font-size: 12px; text-align: center; }
-        th { background: #dceeff; }
-        @media print { @page { size: A4 landscape; } }
-      </style></head><body>`;
-
-      for (const teacher in teacherMap) {
-        const map = {};
-        for (let d of days) map[d] = {};
-        teacherMap[teacher].forEach(entry => {
-          const slot = entry.Time_Slot;
-          const text = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
-          const daysList = (entry.Days || '').split(/,|-/).map(d => d.trim());
-          daysList.forEach(day => {
-            if (map[day]) map[day][slot] = text;
-          });
-        });
-
-        html += `<h2>${teacher}</h2><table><tr><th>Day / Time</th>`;
-        timeSlots.forEach(slot => html += `<th>${slot}</th>`);
-        html += '</tr>';
-        days.forEach(day => {
-          html += `<tr><th>${day}</th>`;
-          timeSlots.forEach(slot => {
-            html += `<td>${map[day][slot] || ''}</td>`;
-          });
-          html += '</tr>';
-        });
-        html += '</table><hr />';
-      }
-
-      html += `</body></html>`;
-
-      const printWindow = window.open('', '', 'width=1200,height=800');
-      printWindow.document.write(html);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
+  let html = `<html><head><title>All Teachers Timetable</title><style>
+    body { font-family: Arial, sans-serif; padding: 1cm; background: white; }
+    h2, h3 { text-align: center; margin: 0.5cm 0; }
+    .teacher-block { page-break-after: always; margin-bottom: 2cm; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
+    th, td { border: 1px solid #000; padding: 6px; font-size: 12px; text-align: center; vertical-align: middle; word-wrap: break-word; }
+    th { background: #dceeff; }
+    @media print {
+      @page { size: A4 landscape; margin: 1cm; }
     }
+  </style></head><body>`;
+
+  for (const teacher of Object.keys(teacherMap).sort()) {
+    const map = {};
+    for (let d of days) map[d] = {};
+    teacherMap[teacher].forEach(entry => {
+      const slot = entry.Time_Slot;
+      const text = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
+      const daysList = (entry.Days || '').split(/,|-/).map(d => d.trim());
+      daysList.forEach(day => {
+        if (map[day]) map[day][slot] = text;
+      });
+    });
+
+    html += `
+      <div class="teacher-block">
+        <h2>Govt. College for Women, KARNAL</h2>
+        <h3>Dr. ${teacher}</h3>
+        <h3>Teacher’s Weekly Timetable for the Session 2025–26 (Odd Semester)</h3>
+        <table><tr><th>Day / Time</th>`;
+
+    timeSlots.forEach(slot => {
+      html += `<th>${slot}</th>`;
+    });
+    html += `</tr>`;
+
+    days.forEach(day => {
+      html += `<tr><th>${day}</th>`;
+      timeSlots.forEach(slot => {
+        html += `<td>${map[day][slot] || ''}</td>`;
+      });
+      html += `</tr>`;
+    });
+
+    html += `</table></div>`;
+  }
+
+  html += `</body></html>`;
+
+  const printWindow = window.open('', '', 'width=1200,height=800');
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
 
 
   function updatePrintFooter() {
