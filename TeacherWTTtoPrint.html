@@ -249,7 +249,7 @@ async  function generateSchedule() {
     for (let d of days) map[d] = {};
     teacherMap[teacher].forEach(entry => {
       const slot = entry.Time_Slot;
-      const text = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
+      const text = `${entry.Subject || ''} <br>(${entry.Class || ''}-${entry.Section || ''})<br>${entry.Room_No || ''}`;
       const daysList = (entry.Days || '').split(/,|-/).map(d => d.trim());
       daysList.forEach(day => {
         if (map[day]) map[day][slot] = text;
