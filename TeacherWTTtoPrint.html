@@ -148,7 +148,7 @@ async  function generateSchedule() {
         (entry.Days || "").split(/,|-/).forEach(day => {
           const d = day.trim();
           if (!map[d]) map[d] = {};
-          map[d][entry.Time_Slot] = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>R-${entry.Room_No || ''}`;
+          map[d][entry.Time_Slot] = `${entry.Subject || ''} (${entry.Class || ''}-${entry.Section || ''})<br>${entry.Room_No || ''}`;
         });
       });
 
