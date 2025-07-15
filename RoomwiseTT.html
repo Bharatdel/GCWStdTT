@@ -130,7 +130,10 @@
 
         const tbody = document.querySelector("#timetable tbody");
 
-        Object.keys(roomMap).sort().forEach(room => {
+       Object.keys(roomMap).sort((a, b) => {
+          return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+        }).forEach(room => {
+
           const row = document.createElement("tr");
 
           const roomCell = document.createElement("td");
