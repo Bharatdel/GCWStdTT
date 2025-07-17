@@ -154,7 +154,7 @@
     <form id="rollForm">
       <label for="rollno">Enter Your Complete Roll Number:</label>
       <input type="text" id="rollno" name="rollno" required />
-      <button type="submit">Get Section Info</button>
+      <button type="submit">Get Time-Table Info</button>
     </form>
 
     <div id="result" class="result" style="display:none;"></div>
@@ -237,6 +237,7 @@
       
       let html = `<h3>Schedule for ${properName}</h3>
       <h4> Following is the listing for all theory classes only (kindly contact respective department for lab. classes) </h4>
+      
       <table>
         <tr>
           <th>Class</th>
@@ -288,6 +289,7 @@
         });
         html += '</tr>';
       });
+      html += '<tr><a href="http://www.gcwkarnal.ac.in/StudentNotices"> Click here to know/download all sections of your class </a></tr>'
       html += '</table>';
 
       output.innerHTML = `<div class="table-wrapper">${html}</div>`;
