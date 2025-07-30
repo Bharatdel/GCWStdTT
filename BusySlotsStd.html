@@ -137,6 +137,9 @@
       margin-top: 1rem;
     }
   </style>
+  <!-- Add this line in <head> for SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </head>
 <body>
   <div class="container">
@@ -192,76 +195,85 @@
     fetchClassTimetable();
   });
 
-  async function fetchClassTimetable() {
-    const selectedClass = document.getElementById("classSelect").value.trim();
-    const output = document.getElementById("result");
-    output.style.display = 'block';
+ async function fetchClassTimetable() {
+  const selectedClass = document.getElementById("classSelect").value.trim();
+  const output = document.getElementById("result");
+  output.style.display = 'block';
 
-    if (!selectedClass) {
-      alert("Please select a class.");
-      return;
-    }
+  if (!selectedClass) {
+    alert("Please select a class.");
+    return;
+  }
 
-    output.innerHTML = "Loading...";
+  output.innerHTML = "Loading...";
 
-    try {
-      const studentSnap = await db.ref("Student").once("value");
-      const allStudents = studentSnap.val() || {};
-      const studentList = Object.entries(allStudents).filter(([_, s]) =>
-        s.sem?.trim().toLowerCase() === selectedClass.toLowerCase()
-      );
+  try {
+    const studentSnap = await db.ref("Student").once("value");
+    const allStudents = studentSnap.val() || {};
+    const studentList = Object.entries(allStudents).filter(([_, s]) =>
+      s.sem?.trim().toLowerCase() === selectedClass.toLowerCase()
+    );
 
-      const ttSnap = await db.ref("FlattenedTT").once("value");
-      const allTT = Object.values(ttSnap.val() || {});
+    const ttSnap = await db.ref("FlattenedTT").once("value");
+    const allTT = Object.values(ttSnap.val() || {});
 
-      let html = `<h3>Time Table Days for Class: ${selectedClass}</h3><table><tr><th>Roll No.</th>`;
-      timeSlots.forEach(slot => html += `<th>${slot}</th>`);
-      html += `</tr>`;
+    let html = `<h3>Time Table Days for Class: ${selectedClass}</h3><table id="tt-table"><tr><th>Roll No.</th>`;
+    timeSlots.forEach(slot => html += `<th>${slot}</th>`);
+    html += `</tr>`;
 
-      for (const [rollNo, student] of studentList) {
-        const subjectSectionPairs = [];
-        for (let i = 1; i <= 8; i++) {
-          const sub = student[`sub${i}`];
-          const sec = student[`sec${i}`];
-          if (sub && sec) {
-            subjectSectionPairs.push(`${sub.trim().toLowerCase()}|${sec.trim().toLowerCase()}`);
-          }
+    for (const [rollNo, student] of studentList) {
+      const subjectSectionPairs = [];
+      for (let i = 1; i <= 8; i++) {
+        const sub = student[`sub${i}`];
+        const sec = student[`sec${i}`];
+        if (sub && sec) {
+          subjectSectionPairs.push(`${sub.trim().toLowerCase()}|${sec.trim().toLowerCase()}`);
         }
-
-        const matched = allTT.filter(row =>
-          (row.Class || '').trim().toLowerCase() === selectedClass.toLowerCase() &&
-          subjectSectionPairs.includes(
-            `${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`
-          )
-        );
-
-        const timeSlotMap = {};
-        timeSlots.forEach(slot => timeSlotMap[slot] = new Set());
-
-        matched.forEach(row => {
-          const time = row.Time_Slot?.trim();
-          const dayList = row.Days?.split(/,|-/).map(x => x.trim()).filter(x => x);
-          if (timeSlots.includes(time)) {
-            dayList.forEach(day => timeSlotMap[time].add(day));
-          }
-        });
-
-        html += `<tr><td>${rollNo}</td>`;
-        timeSlots.forEach(slot => {
-          const days = Array.from(timeSlotMap[slot]).join(', ');
-          html += `<td>${days || '-'}</td>`;
-        });
-        html += `</tr>`;
       }
 
-      html += `</table>`;
-      output.innerHTML = `<div class="table-wrapper">${html}</div>`;
+      const matched = allTT.filter(row =>
+        (row.Class || '').trim().toLowerCase() === selectedClass.toLowerCase() &&
+        subjectSectionPairs.includes(
+          `${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`
+        )
+      );
 
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      output.innerHTML = "<p style='color:red;'>Error fetching timetable. Please try again later.</p>";
+      const timeSlotMap = {};
+      timeSlots.forEach(slot => timeSlotMap[slot] = new Set());
+
+      matched.forEach(row => {
+        const time = row.Time_Slot?.trim();
+        const dayList = row.Days?.split(/,|-/).map(x => x.trim()).filter(x => x);
+        if (timeSlots.includes(time)) {
+          dayList.forEach(day => timeSlotMap[time].add(day));
+        }
+      });
+
+      html += `<tr><td>${rollNo}</td>`;
+      timeSlots.forEach(slot => {
+        const days = Array.from(timeSlotMap[slot]).join(', ');
+        html += `<td>${days || '-'}</td>`;
+      });
+      html += `</tr>`;
     }
+
+    html += `</table>`;
+    html += `<div style="text-align:center; margin-top:1rem;">
+               <button onclick="downloadExcel()">Download Excel</button>
+             </div>`;
+    output.innerHTML = `<div class="table-wrapper">${html}</div>`;
+
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    output.innerHTML = "<p style='color:red;'>Error fetching timetable. Please try again later.</p>";
   }
+}
+function downloadExcel() {
+  const table = document.getElementById("tt-table");
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Timetable" });
+  XLSX.writeFile(wb, "Class_Timetable.xlsx");
+}
+
 </script>
 
 </body>
