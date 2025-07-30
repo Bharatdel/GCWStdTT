@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Section Lookup</title>
+  <style>
+    :root {
+      --primary-color: #6a0572;
+      --highlight-color: #ff6f61;
+      --bg-color: #fdf0f5;
+      --card-bg: #fff;
+      --text-color: #2c2c2c;
+      --border-color: #b50051;
+      --header-bg: #6a0572;
+      --header-text: #fff;
+      --input-border: #d17fc1;
+      --alt-row: #fff7fa;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-color);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      color: var(--text-color);
+    }
+
+    .container {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(106, 5, 114, 0.25);
+      width: 100%;
+      max-width: 750px;
+      border: 3px solid var(--border-color);
+    }
+
+    img {
+      display: block;
+      margin: 0 auto 1rem;
+      height: 80px;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--highlight-color);
+      font-weight: 500;
+      margin-top: 0;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    label {
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    input[type="text"] {
+      padding: 0.7rem 1rem;
+      font-size: 1rem;
+      border: 2px solid var(--input-border);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 8px rgba(106, 5, 114, 0.3);
+      outline: none;
+    }
+
+    button {
+      padding: 0.8rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--highlight-color), var(--primary-color));
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .result {
+      margin-top: 2rem;
+      background: #fff0f5;
+      border: 2px solid var(--primary-color);
+      padding: 1.2rem;
+      border-radius: 12px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      min-width: 800px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.7rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th {
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) td {
+      background-color: var(--alt-row);
+    }
+
+    h3 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="Logo.jpg" alt="College Logo" />
+    <h1>GCW KARNAL</h1>
+    <h2>Know Your Time Table (Days Only View)</h2>
+
+    <form id="rollForm">
+      <label for="rollno">Enter Your Complete Roll Number:</label>
+      <input type="text" id="rollno" name="rollno" required />
+      <button type="submit">Get Time-Table Info</button>
+    </form>
+
+    <div id="result" class="result" style="display:none;"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDV9ASRzlNYcOmo6zYNo5_f-svsCJljqbA",
+    authDomain: "gcw-timetable.firebaseapp.com",
+    databaseURL: "https://gcw-timetable-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gcw-timetable",
+    storageBucket: "gcw-timetable.appspot.com",
+    messagingSenderId: "654415403426",
+    appId: "1:654415403426:web:7651a0a730ac20186a3afb"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const timeSlots = ["9 to 10", "10 to 11", "11 to 12", "12 to 1", "1 to 2", "2 to 3", "3 to 4"];
+
+  document.getElementById("rollForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    fetchSchedule();
+  });
+
+  async function fetchSchedule() {
+    const rollNo = document.getElementById("rollno").value.trim();
+    const output = document.getElementById("result");
+    output.style.display = 'block';
+
+    if (!rollNo) {
+      alert("Please enter a roll number.");
+      return;
+    }
+
+    output.innerHTML = "Loading...";
+
+    try {
+      const studentSnap = await db.ref(`Student/${rollNo}`).once('value');
+      if (!studentSnap.exists()) {
+        output.innerHTML = `<p style="color: red;">No student found for Roll No: ${rollNo}</p>`;
+        return;
+      }
+
+      const student = studentSnap.val();
+      const subjectSectionPairs = [];
+
+      for (let i = 1; i <= 8; i++) {
+        const sub = student[`sub${i}`];
+        const sec = student[`sec${i}`];
+        if (sub && sec) {
+          subjectSectionPairs.push(`${sub.trim().toLowerCase()}|${sec.trim().toLowerCase()}`);
+        }
+      }
+
+      const studentClass = student.sem;
+      const ttSnap = await db.ref("FlattenedTT").once('value');
+      const allTT = Object.values(ttSnap.val() || {});
+
+      const matched = allTT.filter(row =>
+        (row.Class || '').trim().toLowerCase() === studentClass.trim().toLowerCase() &&
+        subjectSectionPairs.includes(
+          `${(row.Subject || '').trim().toLowerCase()}|${(row.Section || '').trim().toLowerCase()}`
+        )
+      );
+
+      if (matched.length === 0) {
+        output.innerHTML = `<p>No matching timetable entries found for ${student.name}.</p>`;
+        return;
+      }
+
+      // Prepare day listing under each time slot
+      const timeSlotMap = {};
+      timeSlots.forEach(slot => timeSlotMap[slot] = new Set());
+
+      matched.forEach(row => {
+        const time = row.Time_Slot?.trim();
+        const dayList = row.Days?.split(/,|-/).map(x => x.trim()).filter(x => x);
+        if (timeSlots.includes(time)) {
+          dayList.forEach(day => timeSlotMap[time].add(day));
+        }
+      });
+
+      // Prepare final table
+      let html = `<h3>Days of Your Classes (Grouped by Time Slots)</h3><table><tr><th>Roll No.</th>`;
+      timeSlots.forEach(slot => html += `<th>${slot}</th>`);
+      html += `</tr><tr><td>${rollNo}</td>`;
+
+      timeSlots.forEach(slot => {
+        const days = Array.from(timeSlotMap[slot]).join(', ');
+        html += `<td>${days || '-'}</td>`;
+      });
+
+      html += `</tr></table>`;
+      output.innerHTML = `<div class="table-wrapper">${html}</div>`;
+
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      output.innerHTML = "<p style='color:red;'>Error fetching timetable. Please try again later.</p>";
+    }
+  }
+</script>
+
+</body>
+</html>
