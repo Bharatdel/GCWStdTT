@@ -225,7 +225,7 @@
         const className = entry["Class"]?.trim() || "";
         const section = entry["Section"]?.trim() || "";
         const teacherName = entry["Teacher"]?.trim();
-        const teacher = teacherName ? `Dr. ${teacherName}` : "⚠ Missing Teacher";
+        const teacher = teacherName ? `${teacherName}` : "⚠ Missing Teacher";
         const days = entry["Days"]?.trim() || "";
 
         roomMap[slot].push({ class: className, section, teacher, days });
